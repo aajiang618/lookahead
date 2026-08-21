@@ -66,18 +66,15 @@
   top: var(--gap-3);
 }
 
+/*
+ * On a phone the tabs are a bar along the bottom, where a thumb already is.
+ * The header keeps only the wordmark, and the main area pads itself so the
+ * drill's bottom strip never slides under the bar.
+ */
 @media (max-width: 44rem) {
   .shell__head {
-    padding-left: var(--gap-3);
+    padding-left: max(var(--gap-3), env(safe-area-inset-left));
     gap: var(--gap-2);
-  }
-
-  /*
-   * One row, not two. A wrapped header costs about 32px, and on a phone that
-   * is 32px taken off the cube on every screen — the wordmark's glyph carries
-   * the identity by itself at this size.
-   */
-  .shell__head {
     flex-wrap: nowrap;
     align-items: center;
   }
@@ -86,14 +83,29 @@
     display: none;
   }
 
-  .fma {
-    border-bottom: 0;
+  .shell__head .fma {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    justify-content: space-around;
+    padding: 0.3rem max(var(--gap-3), env(safe-area-inset-left))
+      calc(0.3rem + env(safe-area-inset-bottom));
+    background: var(--ground);
   }
 
   .fma__item {
-    padding-inline: 0.75rem;
-    text-align: center;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding-block: 0.6rem;
   }
+
+  .shell__main {
+    padding-bottom: calc(3.6rem + env(safe-area-inset-bottom));
+  }
+}
 }
 
 /*

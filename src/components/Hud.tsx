@@ -21,8 +21,9 @@ import './hud.css'
 
 export interface ModeStripItem {
   id: string
+  /** Spoken, not shown: the bar is icons only. */
   label: string
-  hint?: string
+  icon: ReactNode
 }
 
 export function ModeStrip({
@@ -45,9 +46,10 @@ export function ModeStrip({
             className="fma__item"
             data-active={isActive}
             aria-current={isActive ? 'page' : undefined}
+            aria-label={item.label}
+            title={item.label}
             onClick={() => onSelect(item.id)}
           >
-            {/* The active mode is boxed, the way an engaged flight mode is. */}
             {isActive && (
               <motion.span
                 layoutId="fma-box"
@@ -55,7 +57,10 @@ export function ModeStrip({
                 transition={{ type: 'spring', stiffness: 620, damping: 44 }}
               />
             )}
-            <span className="fma__label">{item.label}</span>
+            <span className="fma__icon" aria-hidden="true">
+              {item.icon}
+            </span>
+            <span className="visually-hidden">{item.label}</span>
           </button>
         )
       })}

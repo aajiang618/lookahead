@@ -1,16 +1,21 @@
 /**
- * The Train tab's front door: four cards, then the case grid.
+ * Home: today, how far the repertoire has come, and the case grid.
  *
- * The cards are deliberately the same shape — a name, one line of state, and
- * nothing else. Today is the scheduler's plan; Learn and Review are its two
- * halves; Test is timed recognition across everything unlocked, the drill you
- * can run with no cube in your hands. The grid underneath practises one OLL,
- * multiple choice, unscored.
+ * One card. Today is the whole plan — review of what is due, then new cases as
+ * the gate allows — so splitting it into more cards was giving names to parts
+ * of one thing. The card shows the OLLs currently being learned as diagrams,
+ * because a shape is recognised faster than a number, which is rather the
+ * point of this app.
+ *
+ * The grid practises one OLL — its diagram is the icon — multiple choice,
+ * unscored.
  */
 
 import { useMemo } from 'react'
 import { OLL_CASES } from '../cube/cases.ts'
-import { composePool, DAILY_NEW_CAP, newLoadCount } from '../train/scheduler.ts'
+import { CaseDiagram } from '../components/CaseDiagram.tsx'
+import { Ladder } from '../components/Hud.tsx'
+import { composePool, DAILY_NEW_CAP } from '../train/scheduler.ts'
 import { predictItemId } from '../train/useSession.ts'
 import { today } from '../train/store.ts'
 import type { SessionMode } from '../train/useSession.ts'
@@ -30,16 +35,16 @@ export function TrainHome({
 }) {
   const { progress, baseline } = session
 
-  const counts = useMemo(() => {
+  const state = useMemo(() => {
     const pool = composePool(progress, 100)
     const items = Object.values(progress.items)
     const introducedToday = (progress.newByDay[today()] ?? []).length
+    const learningIds = new Set(pool.building)
     return {
       due: pool.dueMaintenance.length,
-      learning: pool.building.length,
-      unlocked: items.filter((i) => i.phase !== 'locked').length,
+      learning: OLL_CASES.filter((oll) => learningIds.has(predictItemId(oll.id))),
+      automatic: items.filter((i) => i.phase === 'maintenance').length,
       newLeft: Math.max(0, DAILY_NEW_CAP - introducedToday),
-      active: newLoadCount(progress),
       started: items.length > 0,
     }
   }, [progress])
@@ -47,46 +52,34 @@ export function TrainHome({
   return (
     <div className="train-home">
       <h1 className="train-home__title">
-        {counts.started && baseline.medianSeconds
+        {state.started && baseline.medianSeconds
           ? `${baseline.medianSeconds.toFixed(2)}s`
           : 'Lookahead'}
       </h1>
 
-      <div className="train-home__cards">
-        <Card
-          primary
-          title="Today"
-          line={
-            counts.started
-              ? `${counts.due} due · ${counts.learning} learning · ${counts.newLeft} new`
-              : 'Start here'
-          }
-          onClick={() => onStart({ kind: 'guided' })}
-        />
-        <Card
-          title="Learn"
-          line={
-            counts.learning > 0
-              ? `${counts.learning} in progress`
-              : counts.newLeft > 0
-                ? `${counts.newLeft} new available`
-                : 'Nothing new today'
-          }
-          disabled={counts.learning === 0 && counts.newLeft === 0}
-          onClick={() => onStart({ kind: 'learn' })}
-        />
-        <Card
-          title="Review"
-          line={counts.due > 0 ? `${counts.due} due` : 'Nothing due'}
-          disabled={counts.due === 0}
-          onClick={() => onStart({ kind: 'review' })}
-        />
-        <Card
-          title="Test"
-          line={counts.unlocked > 0 ? `${counts.unlocked} cases, timed` : 'Learn a case first'}
-          disabled={counts.unlocked === 0}
-          onClick={() => onStart({ kind: 'timed' })}
-        />
+      <button type="button" className="train-home__today" onClick={() => onStart({ kind: 'guided' })}>
+        <span className="train-home__today-text">
+          <b>Today</b>
+          <i>
+            {state.started
+              ? `${state.due} to review · ${state.newLeft} new`
+              : 'Start here'}
+          </i>
+        </span>
+        {state.learning.length > 0 && (
+          <span className="train-home__today-cases" aria-hidden="true">
+            {state.learning.slice(0, 4).map((oll) => (
+              <CaseDiagram key={oll.id} facelets={oll.state} mode="orientation" size={40} />
+            ))}
+          </span>
+        )}
+      </button>
+
+      <div className="train-home__progress">
+        <Ladder value={state.automatic / OLL_CASES.length} />
+        <span className="label">
+          {state.automatic} of {OLL_CASES.length} automatic
+        </span>
       </div>
 
       <button
@@ -108,10 +101,11 @@ export function TrainHome({
                   type="button"
                   className="train-home__case"
                   data-state={item?.phase ?? 'locked'}
+                  title={oll.name}
                   onClick={() => onPickCase(oll.id)}
                 >
+                  <CaseDiagram facelets={oll.state} mode="orientation" size={40} />
                   <b>{oll.number}</b>
-                  <i className="label">{oll.group}</i>
                 </button>
               </li>
             )
@@ -119,32 +113,5 @@ export function TrainHome({
         </ul>
       </section>
     </div>
-  )
-}
-
-function Card({
-  title,
-  line,
-  onClick,
-  primary,
-  disabled,
-}: {
-  title: string
-  line: string
-  onClick: () => void
-  primary?: boolean
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      className="train-home__card"
-      data-primary={primary}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <b>{title}</b>
-      <i>{line}</i>
-    </button>
   )
 }

@@ -116,12 +116,19 @@ The cube's turn animation is cubic ease-out, matching a well-tensioned puzzle.
 
 Three tabs: **Train**, **Cases**, **Log**.
 
-**Train is four cards and a grid.** The cards share one shape — a name and one
-line of state — with Today the single filled one. Learn and Review are the
-scheduler's two halves; **Test** is timed recognition across everything
-unlocked, multiple choice, and it scores: the schedule chose nothing, but the
-cases are its own pool, so the reps are honest evidence. The grid practises one
-OLL, sorted by number, every PLL it can leave, multiple choice, unscored.
+**Four tabs on a bottom bar, icons only** (Heroicons outline, inlined — four
+paths do not justify a dependency and the offline build must not fetch). Home is
+the day; Train is the timed test, one tap and straight in; Cases; Log. On a
+phone the bar is fixed to the bottom where a thumb already is, and the main
+area pads itself so the drill's strip never slides under it. On a laptop the
+same strip sits in the header.
+
+**Home is one card.** Today is the whole plan — review of what is due, then new
+material as the gate allows — so splitting it into more cards was giving names
+to parts of one thing. The card shows the OLLs currently being learned as
+diagrams, because a shape is recognised faster than a number, which is rather
+the point of this app. Under it, a progress bar: n of 57 automatic. The practice
+grid tiles carry each case's diagram as the icon, for the same reason.
 
 **The lesson is one sentence.** "Front UBR top, UR top, UFL front → no block;
 right UFL top, UF top, UFR top → no block — only Rb." What to look at, what it

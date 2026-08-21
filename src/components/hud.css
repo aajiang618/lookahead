@@ -44,11 +44,11 @@
   pointer-events: none;
 }
 
-.fma__label {
+.fma__icon {
   position: relative;
-  font-size: var(--label-size);
-  letter-spacing: var(--label-tracking);
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* --- Surfaces ------------------------------------------------------------ */

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ModeStrip } from './components/Hud.tsx'
+import { BoltIcon, ChartIcon, HomeIcon, SquaresIcon } from './components/icons.tsx'
 import { Drill } from './routes/Drill.tsx'
 import { TrainHome } from './routes/TrainHome.tsx'
 import { Cases } from './routes/Cases.tsx'
@@ -8,10 +9,16 @@ import { useSession, GUIDED, type SessionMode } from './train/useSession.ts'
 import { auditCases } from './cube/cases.ts'
 import './app.css'
 
+/*
+ * Four tabs. Home is the day's plan; Train is the timed test, straight in —
+ * it draws on whatever the schedule has already put in front of you, so it is
+ * a tab rather than a card you must find.
+ */
 const MODES = [
-  { id: 'train', label: 'Train' },
-  { id: 'cases', label: 'Cases' },
-  { id: 'log', label: 'Log' },
+  { id: 'train', label: 'Home', icon: <HomeIcon /> },
+  { id: 'test', label: 'Train', icon: <BoltIcon /> },
+  { id: 'cases', label: 'Cases', icon: <SquaresIcon /> },
+  { id: 'log', label: 'Log', icon: <ChartIcon /> },
 ]
 
 /**
@@ -26,6 +33,8 @@ function readHash(): string[] {
   const parts = raw.split('/').filter(Boolean)
   // `drill` was the old name for this tab; keep old links working.
   if (parts[0] === 'drill') parts[0] = 'train'
+  // The test is a top-level tab that lives inside the train routes.
+  if (parts[0] === 'test') return ['train', 'test']
   if (parts.length === 0 || !['train', 'cases', 'log'].includes(parts[0])) return ['train']
   return parts
 }
@@ -46,6 +55,7 @@ export default function App() {
   }, [])
 
   const tab = route[0]
+  const navTab = tab === 'train' && route[1] === 'test' ? 'test' : tab
 
   // The session a route asks for, started once on arrival.
   const startSession = useCallback(
@@ -105,7 +115,16 @@ export default function App() {
         <div className="shell__brand">
           <Wordmark />
         </div>
-        <ModeStrip items={MODES} active={tab} onSelect={(id) => go(id)} />
+        <ModeStrip
+          items={MODES}
+          active={navTab}
+          onSelect={(id) => {
+            if (id === 'test') {
+              session.start({ kind: 'timed' })
+              go('train/test')
+            } else go(id)
+          }}
+        />
       </header>
 
       {dataProblems.length > 0 && (

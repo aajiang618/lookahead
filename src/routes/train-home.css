@@ -21,61 +21,64 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* --- The four cards, one shape ------------------------------------------- */
+/* --- Today --------------------------------------------------------------- */
 
-.train-home__cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gap-3);
-  width: 100%;
-}
-
-.train-home__card {
+.train-home__today {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: var(--gap-4) var(--gap-5);
-  min-height: 5.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-4);
+  width: 100%;
+  padding: var(--gap-5);
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: var(--caution);
   text-align: left;
   transition: background-color var(--capture);
 }
 
-.train-home__card:hover:not(:disabled) {
-  background: var(--surface-strong);
+.train-home__today:hover {
+  background: var(--ink-strong);
 }
 
-.train-home__card:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.train-home__today-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.train-home__card b {
-  font-size: 1.125rem;
+.train-home__today-text b {
+  font-size: 1.25rem;
   font-weight: 600;
-  color: var(--ink-strong);
-}
-
-.train-home__card i {
-  font-style: normal;
-  font-size: 0.8125rem;
-  color: var(--ink-dim);
-}
-
-/* Today is the one to press, so it is the one filled card. */
-.train-home__card[data-primary='true'] {
-  background: var(--caution);
-}
-
-.train-home__card[data-primary='true'] b,
-.train-home__card[data-primary='true'] i {
   color: var(--ground-deep);
 }
 
-.train-home__card[data-primary='true']:hover:not(:disabled) {
-  background: var(--ink-strong);
+.train-home__today-text i {
+  font-style: normal;
+  font-size: 0.8125rem;
+  color: var(--ground-deep);
+  opacity: 0.85;
+}
+
+/* The cases being learned, as shapes: recognised faster than named. */
+.train-home__today-cases {
+  display: flex;
+  gap: var(--gap-2);
+  flex: none;
+}
+
+.train-home__today-cases svg {
+  border-radius: 6px;
+}
+
+.train-home__progress {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+}
+
+.train-home__progress .label {
+  text-align: center;
 }
 
 .train-home__more {
@@ -109,7 +112,7 @@
 
 .train-home__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr));
   gap: var(--gap-2);
 }
 
@@ -118,8 +121,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 0.55rem 0.25rem;
+  gap: 3px;
+  padding: 0.55rem 0.25rem 0.4rem;
   border-radius: var(--radius-sm);
   background: var(--surface);
   transition: background-color var(--capture);
@@ -130,17 +133,9 @@
 }
 
 .train-home__case b {
-  font-size: 0.9375rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--ink-strong);
-}
-
-.train-home__case .label {
-  font-size: 0.5625rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  color: var(--ink-dim);
 }
 
 /* Progress at a glance: learned cases carry the accent. */

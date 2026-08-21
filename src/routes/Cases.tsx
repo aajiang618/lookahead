@@ -93,7 +93,11 @@ export function Cases({
         return {
           oll,
           item,
-          reps: item?.reps ?? 0,
+          // Teaching reps count as reps here. The scheduler splits them —
+          // `reps` is scored trials, `encodes` the introduction — but a solver
+          // who just met a case and sees "0 reps" in the tracker concludes,
+          // reasonably, that the app lost their work.
+          reps: (item?.reps ?? 0) + (item?.encodes ?? 0),
           hitRate: scored.length ? correct.length / scored.length : null,
           pace: correct.length ? median(correct.slice(-8).map((t) => t.netRt)) : null,
           status:

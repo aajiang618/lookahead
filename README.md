@@ -16,11 +16,11 @@ npm run dev
 
 ## The three screens
 
-**Train** opens on four cards. **Today** runs the scheduler's plan; **Learn**
-and **Review** are its two halves; **Test** is timed recognition across
-everything unlocked, answered by multiple choice — the drill you can run with no
-cube in your hands, and it scores, because its cases are the schedule's own
-pool. Underneath, **Practise one case** drills a single OLL, every PLL it can
+**Four tabs, icons, along the bottom on a phone.** Home shows Today — the whole
+plan, review included — with the cases being learned drawn as diagrams and a
+progress bar underneath. Train is the timed test, one tap and straight in:
+scramble and cube shown, clock running, multiple choice, scored, drawing on
+whatever the schedule has already put in front of you. Underneath, **Practise one case** drills a single OLL, every PLL it can
 leave, multiple choice — deliberately **unscored**, because self-selected reps
 are exactly what breaks a spaced-repetition schedule. The scramble differs on
 every rep, so what you learn is the case, never the setup.

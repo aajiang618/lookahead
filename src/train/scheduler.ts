@@ -125,7 +125,13 @@ export const MASTERY_STREAK = 5
 /** Ceiling on log-RT spread. Automatic recognition is consistent, not just fast. */
 export const MASTERY_CONSISTENCY = 0.4
 export const MASTERY_MIN_SESSIONS = 3
-export const MASTERY_MIN_ANGLES = 3
+/*
+ * Was 3 distinct camera angles. The camera no longer rotates — a rotated view
+ * of a rotationally symmetric OLL is ambiguous — so requiring three of them
+ * would mean nothing could ever be mastered. Variety now comes from the PLL
+ * underneath and the AUF, which both change every rep.
+ */
+export const MASTERY_MIN_ANGLES = 1
 
 /** The solver's own "good day" pace — the bar a mastered case must clear. */
 export function masteryThreshold(logRtWindow: number[]): number {

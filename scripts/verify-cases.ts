@@ -554,6 +554,73 @@ console.log('\nHints: the same colour reading, handed over a rung at a time')
   check('every rung lights stickers you can actually see', badHighlight === 0, `${badHighlight} bad`)
 }
 
+console.log('\nOrientation and algorithm choice')
+{
+  const { readTwoSided } = await import('../src/cube/recognition.ts')
+  const { buildDrill, identifyPLL } = await import('../src/cube/scramble.ts')
+  const { ollTopMask } = await import('../src/cube/engine.ts')
+  const { DEFAULT_SETTINGS } = await import('../src/train/store.ts')
+
+  /*
+   * The camera must never rotate. Fourteen OLL top shapes repeat under a
+   * whole-cube rotation, so a rotated view of one of them is ambiguous: the
+   * solver aligns to the shape, executes in a frame the drill did not intend,
+   * and gets a different PLL from the one being graded.
+   */
+  const rot = (m: boolean[]) => [m[6], m[3], m[0], m[7], m[4], m[1], m[8], m[5], m[2]]
+  const key = (m: boolean[]) => m.map((b) => (b ? '1' : '0')).join('')
+  let symmetric = 0
+  for (const oll of OLL_CASES) {
+    const mask = ollTopMask(oll.state)
+    let r = rot(mask)
+    for (let t = 1; t < 4; t++) {
+      if (key(r) === key(mask)) {
+        symmetric++
+        break
+      }
+      r = rot(r)
+    }
+  }
+  check(
+    'rotationally ambiguous shapes exist, so the camera stays straight',
+    symmetric > 0 && DEFAULT_SETTINGS.varyAngle === false,
+    `${symmetric} ambiguous shapes but varyAngle is ${DEFAULT_SETTINGS.varyAngle}`,
+  )
+
+  let disagree = 0
+  for (const oll of OLL_CASES) {
+    for (const pll of PLL_CASES) {
+      const d = buildDrill(oll, pll, 777, { varyAngle: false })
+      if (identifyPLL(d.stateAfterOLL, PLL_CASES)?.id !== pll.id) disagree++
+    }
+  }
+  check('every drill resolves to the case it claims', disagree === 0, `${disagree} disagree`)
+
+  /*
+   * The four readability overrides must still be the best variant available.
+   * If the dataset gains an algorithm, or the scoring changes, this fails
+   * rather than leaving a stale hand-picked choice in place.
+   */
+  const score = (oll: (typeof OLL_CASES)[number], alg: string) => {
+    let unique = 0
+    for (const pll of PLL_CASES) {
+      const drill = buildDrill(oll, pll, 5, { varyAngle: false, varyAuf: false, ollAlg: alg })
+      if (readTwoSided(oll, alg, drill.state).candidates.length === 1) unique++
+    }
+    return unique
+  }
+  let stale = 0
+  for (const oll of OLL_CASES) {
+    const best = Math.max(...oll.algs.map((v) => score(oll, v.alg)))
+    if (score(oll, oll.alg) < best) stale++
+  }
+  check(
+    'each case uses the variant that reads best from two sides',
+    stale === 0,
+    `${stale} cases could read better with another published algorithm`,
+  )
+}
+
 console.log('\nThe lesson: one step, by whichever route the case rewards')
 {
   const { buildTeachingBrief, readTwoSided, decidingComparisons, recognitionMethod, TWO_SIDED_FACELETS } =
@@ -575,7 +642,7 @@ console.log('\nThe lesson: one step, by whichever route the case rewards')
   for (const oll of OLL_CASES) {
     byMethod[recognitionMethod(oll, oll.alg).method]++
     for (const pll of PLL_CASES) {
-      const drill = buildDrill(oll, pll, 5)
+      const drill = buildDrill(oll, pll, 5, { varyAngle: false })
       const read = readTwoSided(oll, drill.ollAlg, drill.state)
       const chain = decidingComparisons(oll, drill.ollAlg, drill.state)
       const steps = buildTeachingBrief(oll, drill.ollAlg, drill.state, drill.stateAfterOLL, pll)

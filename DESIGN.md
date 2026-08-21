@@ -240,6 +240,55 @@ reliably catches.
 They show the *algorithm's* fixed permutation rather than the answer, which is
 what makes leaving them on training wheels rather than cheating.
 
+## The camera never rotates
+
+It used to, for variety, on the argument that rotating the camera cannot change
+the cube and therefore cannot change the answer. True of the cube. False of the
+solver.
+
+**Fourteen of the 57 OLL top shapes repeat under a whole-cube rotation** — not
+the four this file used to name. Shown one of those from a rotated camera, a
+solver aligns to the shape, executes in a frame the drill never intended, and
+gets a genuinely different PLL from the one being graded. Measured: with the
+camera straight, **0 of 1,197 drills disagree**; reading them from a rotated
+camera, most do.
+
+So the cube is always presented in the orientation the algorithm is executed in,
+through the reveal as well. Variety comes from the PLL underneath and the AUF,
+which change every rep and cannot change the case's name. `MASTERY_MIN_ANGLES`
+went from 3 to 1 with it — mastery counted distinct camera angles, and nothing
+could ever have been mastered once the camera stopped moving.
+
+## Algorithm choice is a recognition decision
+
+An algorithm decides where the stickers you can see end up, so two variants of
+one OLL can differ enormously in how much of the answer lands on the front and
+right. Every variant is scored on how many of the 21 outcomes the two-sided read
+pins down alone, and four cases use a variant other than the dataset's first:
+**OLL 11 and 56 go from 2 of 21 to 13**. The suite re-derives the list and fails
+if another published algorithm would now read better, so a hand-picked choice
+cannot go stale. The picker in Cases overrides all of it — muscle memory beats a
+marginal recognition gain.
+
+## What the lesson says, in what order
+
+Corners before edges, because the corner permutation splits the 21 cases into
+three groups before you have looked at an edge — the order every recognition
+guide teaches. Three steps:
+
+1. **The case**, in the orientation you would execute it.
+2. **What won't move** — the read stickers the algorithm leaves alone. These are
+   free: what you see now is what will be there afterwards, which turns a
+   six-sticker prediction into a two or three sticker one.
+3. **What reveals it** — headlights on each face, then which edges match a
+   corner beside them, then the case and what shares the pattern.
+
+The textbook shortcut "headlights on both faces means the corners are solved"
+is **not** used, because it does not survive checking: across the 84 PLL×AUF
+positions it breaks 28 times. It describes headlights counted around all four
+faces, which is not what two-sided recognition can see. The narrowing comes from
+the joint corner/edge classification instead, which is exact.
+
 ## A new case teaches before it tests
 
 The four introducing reps of a case carry the method on screen, and the hint

@@ -1118,23 +1118,6 @@ export interface TeachingStep {
   arrows?: boolean
 }
 
-/** What the algorithm does to one kind of piece, in a clause. */
-function movementClause(map: PieceMap, kind: 'corner' | 'edge'): string {
-  const fixed = kind === 'corner' ? map.cornersFixed : map.edgesFixed
-  const labels = kind === 'corner' ? CORNER_SLOTS : EDGE_SLOTS
-  const cycles = kind === 'corner' ? map.cornerCycles : map.edgeCycles
-  if (fixed) {
-    return kind === 'corner' ? 'no corner moves, they only twist' : 'no edge moves, they only flip'
-  }
-  return cycles
-    .map((cycle) =>
-      cycle.length === 2
-        ? `${labels[cycle[0]]} and ${labels[cycle[1]]} swap`
-        : `${cycle.map((i) => labels[i]).join(' → ')} → ${labels[cycle[0]]}`,
-    )
-    .join('; ')
-}
-
 /**
  * `UFR ← UFL, UBR ← UFR, UFL stays` — what arrives in each slot you are going
  * to read.
@@ -1202,11 +1185,6 @@ function candidateWords(candidates: PLLCase[], limit = 4): string {
   return `${names.length} of the 21`
 }
 
-/** The three stickers of one row, named compactly: `UBR top, UR top, UFL front`. */
-function rowStickers(stickers: ReadSticker[]): string {
-  return stickers.map((s) => s.where).join(', ')
-}
-
 /**
  * How to read this case, said out loud, once — in ONE step.
  *
@@ -1223,6 +1201,53 @@ function rowStickers(stickers: ReadSticker[]): string {
  *
  * Every clause is computed from the algorithm and the state in front of you.
  */
+/**
+ * Of the six stickers you will read, which are already in place.
+ *
+ * These are the free ones: the algorithm never touches them, so what you can
+ * see now is exactly what will be there afterwards. Naming them first is the
+ * whole trick — it turns a six-sticker prediction into a two or three sticker
+ * one.
+ */
+function fixedReadStickers(read: TwoSidedRead): ReadSticker[] {
+  return [...read.front, ...read.right].filter((s) => s.visible && s.from === s.lands)
+}
+
+/**
+ * The corner read and the edge read, in that order.
+ *
+ * The order is not arbitrary: every recognition guide worth reading puts the
+ * corners first, because the corner permutation splits the 21 cases into three
+ * groups before you have looked at a single edge. Corners are the outer sticker
+ * of each row, the edge is the middle one.
+ */
+function cornerEdgeRead(resolved: Facelets): { corners: string; edges: string } {
+  const frontHead = resolved[18] === resolved[20]
+  const rightHead = resolved[9] === resolved[11]
+  const corners =
+    frontHead && rightHead
+      ? 'Headlights both sides'
+      : frontHead
+        ? 'Headlights front'
+        : rightHead
+          ? 'Headlights right'
+          : 'No headlights'
+
+  const joins = (edge: number, a: number, b: number) =>
+    resolved[edge] === resolved[a] || resolved[edge] === resolved[b]
+  const frontJoins = joins(19, 18, 20)
+  const rightJoins = joins(10, 9, 11)
+  const edges =
+    frontJoins && rightJoins
+      ? 'both edges match a corner'
+      : frontJoins
+        ? 'front edge matches a corner'
+        : rightJoins
+          ? 'right edge matches a corner'
+          : 'neither edge matches'
+  return { corners, edges }
+}
+
 export function buildTeachingBrief(
   oll: OLLCase,
   alg: string,
@@ -1277,31 +1302,10 @@ export function buildTeachingBrief(
       : `${blocks} — ${pll.name}, sharing it with ${listOf(others)}`
 
   /*
-   * How the colours reveal the case, in one clause: the pattern each face lands
-   * in and the PLL that pair means, then either the rows that read it or the
-   * comparison that separates the lookalikes.
+   * When the two rows leave more than one case standing, the comparison that
+   * separates them is the useful thing to add; otherwise nothing.
    */
-  let reading: string
-  if (choice.method === 'pattern') {
-    reading =
-      read.candidates.length === 1
-        ? `${signature}. Read it off front ${rowStickers(read.front)} and right ${rowStickers(read.right)}.`
-        : `${signature}. Separate them: ${decider}.`
-  } else {
-    const cornerClause = map.cornersFixed
-      ? 'corners never move — what you see is what you get'
-      : `corners ${movementClause(map, 'corner')}, so ${arrivalsInto(map, 'corner')}`
-    const edgeClause = map.edgesFixed
-      ? 'edges never move'
-      : `edges ${movementClause(map, 'edge')}, so ${arrivalsInto(map, 'edge')}`
-    reading = `${signature}. Getting there: ${cornerClause}; ${edgeClause}.`
-  }
-
-  /* What to look at, named without giving the reading away. */
-  const watchList =
-    read.candidates.length > 0
-      ? `front ${rowStickers(read.front)}; right ${rowStickers(read.right)}`
-      : ''
+  const extra = read.candidates.length === 1 ? '' : ` Separate them: ${decider}.`
 
   const landed = landedBlocks(resolved)
   const landedWords = [
@@ -1311,28 +1315,34 @@ export function buildTeachingBrief(
     .filter(Boolean)
     .join(', ')
 
+  const fixed = fixedReadStickers(read)
+  const cer = cornerEdgeRead(resolved)
+
   /*
-   * Step by step, the way you would be shown at a table: the whole case first,
-   * then the handful of stickers that decide it lit up, then how those colours
-   * name the PLL. The cube is the same throughout — only what is emphasised
-   * changes — so the shape stays in the eye while the words build on it.
+   * Three steps: the whole case, then the stickers that will not move, then
+   * what the colours reveal. Corners before edges, because the corner
+   * permutation splits the 21 cases into three groups before you have looked at
+   * an edge — which is how every recognition guide teaches it.
    */
   return [
     {
       key: 'whole',
       heading: 'The case',
-      text: `${oll.name}, still unsolved. Before you turn it, read what it will leave.`,
+      text: `${oll.name}, in the orientation you would execute it. Read what it will leave before you turn.`,
     },
     {
       key: 'notice',
-      heading: 'Notice these',
-      text: `The stickers that decide it: ${watchList}. Their colours are already on the cube — the algorithm only moves them.`,
-      highlight: lit,
+      heading: "What won't move",
+      text:
+        fixed.length > 0
+          ? `${fixed.map((f) => f.where).join(', ')} — the algorithm leaves ${fixed.length === 1 ? 'it' : 'them'} where ${fixed.length === 1 ? 'it is' : 'they are'}, so what you see is what you get. The rest arrive from ${arrivalsInto(map, 'corner')}.`
+          : `Nothing stays: every sticker you read arrives from somewhere else — ${arrivalsInto(map, 'corner')}; ${arrivalsInto(map, 'edge')}.`,
+      highlight: fixed.length > 0 ? fixed.map((f) => f.from as number) : lit,
     },
     {
       key: 'read',
-      heading: 'How it reads',
-      text: reading,
+      heading: 'What reveals it',
+      text: `${cer.corners}; ${cer.edges} — ${signature.replace(/^Front[^—]*— /, '')}.${extra}`,
       highlight: lit,
       arrows: choice.method === 'swaps',
     },

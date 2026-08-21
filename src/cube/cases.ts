@@ -100,6 +100,31 @@ interface RawFile {
   cases: Record<string, RawCase>
 }
 
+/*
+ * Four cases where a published variant is markedly easier to READ than the one
+ * the dataset lists first.
+ *
+ * An algorithm decides where the stickers you can see end up, so the choice is
+ * a recognition decision as much as an execution one. These four were found by
+ * scoring every variant on how many of the 21 outcomes the two-sided read pins
+ * down on its own; `scripts/verify-cases.ts` re-derives the list and fails if a
+ * different variant would now be better. OLL 11 and 56 go from 2 of 21 to 13.
+ *
+ * Everything else keeps the dataset's first algorithm, and the picker in Cases
+ * overrides any of it — muscle memory beats a marginal recognition gain.
+ */
+const READABLE_ALG: Record<string, string> = {
+  'oll-11': "r' R2 U R' U R U2 R' U M'",
+  'oll-12': "r R2' U' R U' R' U2 R U' M",
+  'oll-21': "F (R U R' U') (R U R' U') (R U R' U') F'",
+  'oll-56': "F R U R' U' R F' r U R' U' r'",
+}
+
+function preferredAlg(id: string, algs: AlgVariant[]): string {
+  const wanted = READABLE_ALG[id]
+  return wanted && algs.some((v) => v.alg === wanted) ? wanted : algs[0].alg
+}
+
 function variants(raw: RawCase): AlgVariant[] {
   return Object.entries(raw.algs).map(([alg, meta]) => ({ alg, note: meta.note }))
 }
@@ -112,12 +137,12 @@ function buildOLL(): OLLCase[] {
   const raw = (ollData as unknown as RawFile).cases
   return Object.entries(raw).map(([name, entry]) => {
     const algs = variants(entry)
-    const alg = algs[0].alg
+    const number = Number(name.replace(/\D+/g, ''))
+    const alg = preferredAlg(`oll-${number}`, algs)
     // Undoing the algorithm from solved leaves exactly this OLL on top.
     const state = applyAlg(SOLVED, invertAlg(alg))
     const top = ollTopMask(state)
     const side = ollSideMask(state)
-    const number = Number(name.replace(/\D+/g, ''))
     const cornerSlots = [0, 2, 6, 8]
     const edgeSlots = [1, 3, 5, 7]
     return {

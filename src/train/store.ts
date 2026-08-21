@@ -100,6 +100,15 @@ export interface Settings {
    * recognition and is therefore not the default.
    */
   answerMode: 'choices' | 'reveal'
+  /**
+   * Rotate the camera between reps.
+   *
+   * Off, and it should stay off. Fourteen of the 57 OLL top shapes repeat under
+   * a whole-cube rotation, so a rotated view of one of those is genuinely
+   * ambiguous: the solver aligns to the shape, executes in a frame the drill
+   * did not intend, and gets a different PLL from the one the app is grading.
+   * Measured — with the camera straight, 0 of 1,197 drills disagree.
+   */
   varyAngle: boolean
   varyAuf: boolean
   reduceMotion: boolean
@@ -146,7 +155,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   sessionSeconds: 300,
   answerMode: 'choices',
-  varyAngle: true,
+  varyAngle: false,
   varyAuf: true,
   reduceMotion: false,
   showFeatureOverlay: true,
@@ -328,6 +337,8 @@ function migrate(progress: Progress): Progress {
      * superseded default is not a preference.
      */
     if (settings.answerMode === 'reveal') settings.answerMode = base.settings.answerMode
+    // Same reason: it was the old default, and it makes some drills ambiguous.
+    settings.varyAngle = base.settings.varyAngle
     return { ...base, settings }
   }
   return {

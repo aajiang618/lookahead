@@ -53,16 +53,21 @@ export type SessionPhase = 'idle' | 'presenting' | 'feedback' | 'finished'
  *  - `learn` — new material only, taught then tested, until the day's
  *    allowance is used up.
  *  - `review` — what is due today and nothing new.
- *  - `practice` — a PLL you picked, drilled against every OLL that can leave
- *    it. Deliberately UNSCORED: self-selected reps are exactly the input that
- *    breaks a spaced-repetition schedule, and the point of picking is to work
- *    on something now, not to tell the scheduler what you know.
+ *  - `practice` — one OLL you picked, every PLL it can leave, answered by
+ *    multiple choice. Deliberately UNSCORED: self-selected reps are exactly
+ *    the input that breaks a spaced-repetition schedule, and the point of
+ *    picking is to work on something now, not to tell the scheduler what you
+ *    know.
+ *  - `timed` — a recognition test across everything unlocked, answered by
+ *    multiple choice against the clock. Scored: the schedule chose nothing,
+ *    but the cases are its own pool, so the reps are honest evidence.
  */
 export type SessionMode =
   | { kind: 'guided' }
   | { kind: 'learn'; more?: boolean }
   | { kind: 'review' }
-  | { kind: 'practice'; pllId: string }
+  | { kind: 'timed' }
+  | { kind: 'practice'; ollId: string }
 
 export const GUIDED: SessionMode = { kind: 'guided' }
 
@@ -190,17 +195,18 @@ export function useSession() {
 
   const buildTrialFor = useCallback((itemId: string, current: Progress): Trial | null => {
     const item = current.items[itemId]
-    if (!item) return null
+    // Practice may pick a case the schedule has not unlocked; that is allowed —
+    // it tests, it never teaches, and it records nothing.
+    if (!item && modeRef.current.kind !== 'practice') return null
     const oll = OLL_BY_ID.get(caseIdOf(itemId))
     if (!oll) return null
 
     const seed = randomSeed()
     const rng = mulberry32(seed)
-    // Which PLL results is the thing being learned, so it varies every rep —
-    // unless the solver has picked one to work on, in which case it is fixed
-    // and the OLL in front of it is what varies.
-    const chosen = modeRef.current.kind === 'practice' ? PLL_BY_ID.get(modeRef.current.pllId) : null
-    const pll = chosen ?? PLL_CASES[Math.floor(rng() * PLL_CASES.length)]
+    // Which PLL results is the thing being learned, so it varies every rep.
+    // The seed varies too, so the same case never arrives by the same scramble
+    // twice — a repeated setup would train recognition of the SCRAMBLE.
+    const pll = PLL_CASES[Math.floor(rng() * PLL_CASES.length)]
     const drill = buildDrill(oll, pll, seed, {
       varyAngle: current.settings.varyAngle,
       varyAuf: current.settings.varyAuf,
@@ -227,7 +233,12 @@ export function useSession() {
       resolved: drill.stateAfterOLL,
       headStart,
       remaining,
-      encoding: isEncoding(item),
+      encoding:
+        modeRef.current.kind === 'practice' || modeRef.current.kind === 'timed'
+          ? false
+          : item
+            ? isEncoding(item)
+            : false,
     }
   }, [])
 
@@ -349,19 +360,21 @@ export function useSession() {
         ? nextPool.building.filter((id) => current.items[id]?.phase !== 'maintenance')
         : kind === 'review'
           ? [...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
-          : kind === 'practice'
+          : kind === 'timed'
             ? Object.values(current.items)
-                .filter((i) => !i.parked)
+                .filter((i) => !i.parked && i.phase !== 'locked')
                 .map((i) => i.id)
-            : [...nextPool.building, ...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
+            : kind === 'practice'
+              ? [predictItemId(modeRef.current.kind === 'practice' ? modeRef.current.ollId : '')]
+              : [...nextPool.building, ...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
     if (ids.length === 0) {
       finish(
         kind === 'learn'
           ? 'Nothing new to learn right now'
           : kind === 'review'
             ? 'Nothing due for review'
-            : kind === 'practice'
-              ? 'No cases unlocked to practise with yet'
+            : kind === 'timed'
+              ? 'Nothing unlocked to test yet'
               : 'Nothing left to drill today',
       )
       return
@@ -369,7 +382,10 @@ export function useSession() {
 
     // A session is a run of exercises, one case each. Stay on the current case
     // until its reps are done, then let the scheduler choose the next.
-    const reps = Math.max(1, current.settings.repsPerExercise)
+    const reps =
+      modeRef.current.kind === 'practice'
+        ? Number.POSITIVE_INFINITY
+        : Math.max(1, current.settings.repsPerExercise)
     const active = exerciseRef.current
     const canContinue = active && active.rep < reps && current.items[active.itemId] && ids.includes(active.itemId)
 
@@ -453,7 +469,7 @@ export function useSession() {
 
       const ctx: LatencyContext = {
         baseline: baselineOf(current),
-        caseLogRts: item.recent
+        caseLogRts: (item?.recent ?? [])
           .filter((t) => t.correct && t.scored)
           .map((t) => Math.log(Math.max(t.netRt, 0.05))),
         caseKey: active.pll.name,

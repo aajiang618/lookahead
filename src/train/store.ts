@@ -7,7 +7,12 @@
 import { DEFAULT_MOTOR_SECONDS } from './latency.ts'
 
 export const STORAGE_KEY = 'lookahead.progress.v1'
-export const SCHEMA_VERSION = 1
+/**
+ * Version 2 resets learning state on load. The lessons were rebuilt around the
+ * colour reading and progress earned against the old ones would grade the new
+ * material as already known; settings — algorithm choices included — survive.
+ */
+export const SCHEMA_VERSION = 2
 
 export type ItemPhase = 'locked' | 'introducing' | 'building' | 'maintenance'
 export type LeechKind = 'none' | 'accuracy' | 'fluency'
@@ -297,6 +302,9 @@ function migrate(progress: Progress): Progress {
   const base = emptyProgress()
   const settings = { ...base.settings, ...progress.settings, algChoice: progress.settings?.algChoice ?? {} }
   if (PREVIOUS_DEFAULT_ZOOMS.includes(settings.cubeZoom)) settings.cubeZoom = base.settings.cubeZoom
+  if ((progress.version ?? 1) < 2) {
+    return { ...base, settings }
+  }
   return {
     ...base,
     ...progress,

@@ -53,10 +53,12 @@ export default function App() {
       session.start(mode)
       go(
         mode.kind === 'practice'
-          ? `train/pll/${mode.pllId}`
+          ? `train/oll/${mode.ollId}`
           : mode.kind === 'guided'
             ? 'train/today'
-            : `train/${mode.kind}${mode.kind === 'learn' && mode.more ? '/more' : ''}`,
+            : mode.kind === 'timed'
+              ? 'train/test'
+              : `train/${mode.kind}${mode.kind === 'learn' && mode.more ? '/more' : ''}`,
       )
     },
     [session, go],
@@ -85,9 +87,11 @@ export default function App() {
       ? { kind: 'learn', more: route[2] === 'more' }
       : route[1] === 'review'
         ? { kind: 'review' }
-        : route[1] === 'pll' && route[2]
-          ? { kind: 'practice', pllId: route[2] }
-          : GUIDED
+        : route[1] === 'test' || route[1] === 'timed'
+          ? { kind: 'timed' }
+          : route[1] === 'oll' && route[2]
+            ? { kind: 'practice', ollId: route[2] }
+            : GUIDED
 
   return (
     <>
@@ -118,7 +122,7 @@ export default function App() {
             <TrainHome
               session={session}
               onStart={startSession}
-              onPickPll={(pllId) => startSession({ kind: 'practice', pllId })}
+              onPickCase={(ollId) => startSession({ kind: 'practice', ollId })}
             />
           ))}
         {tab === 'cases' && (

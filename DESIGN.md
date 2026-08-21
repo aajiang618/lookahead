@@ -116,20 +116,28 @@ The cube's turn animation is cubic ease-out, matching a well-tensioned puzzle.
 
 Three tabs: **Train**, **Cases**, **Log**.
 
-**Train is a page now, not a synonym for the drill.** It opens on a home screen
-with the day's work on it and the drill one press away. Two ways in, and they
-are deliberately not equals:
+**Train is four cards and a grid.** The cards share one shape — a name and one
+line of state — with Today the single filled one. Learn and Review are the
+scheduler's two halves; **Test** is timed recognition across everything
+unlocked, multiple choice, and it scores: the schedule chose nothing, but the
+cases are its own pool, so the reps are honest evidence. The grid practises one
+OLL, sorted by number, every PLL it can leave, multiple choice, unscored.
 
-- **Today**, and its two halves **Learn** and **Review** — the scheduler's own
-  plan, split so new material and revision can be done at different times of day.
-  **Learn more** spends past the day's allowance on purpose; the cap on how many
-  cases may be in progress at once still applies, because that one is not a pace
-  preference but the thing that stops six half-learned cases becoming six badly
-  learned ones.
-- **Practise one case** — pick a PLL and see every OLL that can leave it. This is
-  **unscored**, and that is the point: self-selected reps are exactly the input
-  that breaks a spaced-repetition schedule. Picking says "I want to work on this
-  now", not "this is what I know".
+**The lesson is one sentence.** "Front UBR top, UR top, UFL front → no block;
+right UFL top, UF top, UFR top → no block — only Rb." What to look at, what it
+says, and the comparison that settles it when the rows do not, carried by
+semicolons rather than prose. The suite holds the method step above 40
+characters and the whole thing under 260.
+
+**Version 2 of the store resets learning state on load.** The lessons were
+rebuilt around the colour reading, and progress earned against the old ones
+would grade the new material as already known. Settings — algorithm choices
+included — survive the reset.
+
+**The hidden attribute always wins** (`[hidden] { display: none !important }`).
+Its UA style is a plain `display: none`, which any authored `display: flex` on
+the same element silently defeats — which is exactly how the Cases list kept
+rendering underneath the case it had supposedly handed the screen to.
 
 **Cases is master–detail, and on a phone those are separate pages.** Sharing one
 screen gave 57 rows a 268px window with a cube parked underneath — four cases

@@ -584,7 +584,10 @@ console.log('\nThe lesson: one step, by whichever route the case rewards')
       // One step of method, then the answer. Not three.
       if (steps.length !== 2) wrongShape++
       if (steps.map((s) => s.key).join() !== 'method,result') wrongShape++
-      if (steps.some((s) => !s.text || s.text.length < 40)) thin++
+      // The method step must actually explain; the conclusion is meant to be
+      // terse — "Jb perm — front a 2-bar, right a 2-bar." is complete at 39.
+      if (!steps[0].text || steps[0].text.length < 40) thin++
+      if (!steps[1].text || steps[1].text.length < 20) thin++
       // The strip is a fixed height and the lesson has to live inside it.
       if (steps[0].text.length > 260) tooLong++
 

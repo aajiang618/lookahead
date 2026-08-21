@@ -1240,54 +1240,42 @@ export function buildTeachingBrief(
 
   const first = comparisons[0]
   const decider = first
-    ? ` Then ${first.a.where} vs ${first.b.where}: ` +
-      first.branches.map((b) => `${RELATION_SHORT[b.relation]} → ${candidateWords(b.candidates, 3)}`).join('; ') +
-      '.'
+    ? `; then ${first.a.where} vs ${first.b.where} — ` +
+      first.branches
+        .map((b) => `${RELATION_SHORT[b.relation]} → ${candidateWords(b.candidates, 3)}`)
+        .join(', ') +
+      (comparisons.length > 1 ? '; one more settles it' : '')
     : ''
 
+  /*
+   * ONE sentence: what to look at, what it says, and — when the rows do not
+   * finish it — the comparison that does. Semicolons carry the structure; the
+   * old three-clause prose carried words.
+   */
   let step: TeachingStep
   if (choice.method === 'pattern') {
-    const rows =
-      `Front row: ${rowStickers(read.front)}` +
-      `${read.frontPattern ? ` → ${BLOCK_READING[read.frontPattern]}` : ''}. ` +
-      `Right row: ${rowStickers(read.right)}` +
-      `${read.rightPattern ? ` → ${BLOCK_READING[read.rightPattern]}` : ''}.`
     step = {
       key: 'method',
-      heading: 'Read the two rows',
+      heading: 'Look for',
       text:
-        `${rows}` +
+        `Front ${rowStickers(read.front)}${read.frontPattern ? ` → ${BLOCK_READING[read.frontPattern]}` : ''}; ` +
+        `right ${rowStickers(read.right)}${read.rightPattern ? ` → ${BLOCK_READING[read.rightPattern]}` : ''}` +
         (read.candidates.length === 1
-          ? ` That alone is ${read.candidates[0].name}.`
-          : ` That leaves ${candidateWords(read.candidates)}.${decider}`),
+          ? ` — only ${read.candidates[0].name}.`
+          : ` — leaves ${candidateWords(read.candidates)}${decider}.`),
       highlight: lit,
     }
   } else {
-    /*
-     * A frozen system is the whole point of choosing this route, so it is said
-     * once, plainly, and the slots it holds are not then listed as arrivals —
-     * "UBR stays, UFR stays, UFL stays" is noise directly after "none of them
-     * move".
-     */
-    const parts: string[] = []
-    if (map.cornersFixed) {
-      parts.push(
-        `Corners never move here, only twist — the three you can read now (${TWO_SIDED_CORNER_SLOTS.map((i) => CORNER_SLOTS[i]).join(', ')}) are the three you get.`,
-      )
-    } else {
-      parts.push(`Corners: ${movementClause(map, 'corner')}, so you will read ${arrivalsInto(map, 'corner')}.`)
-    }
-    if (map.edgesFixed) {
-      parts.push(
-        `Edges never move either — ${TWO_SIDED_EDGE_SLOTS.map((i) => EDGE_SLOTS[i]).join(' and ')} stay where they are.`,
-      )
-    } else {
-      parts.push(`Edges: ${movementClause(map, 'edge')}, so ${arrivalsInto(map, 'edge')}.`)
-    }
+    const cornerClause = map.cornersFixed
+      ? 'corners never move — what you see is what you get'
+      : `corners ${movementClause(map, 'corner')}, so ${arrivalsInto(map, 'corner')}`
+    const edgeClause = map.edgesFixed
+      ? 'edges never move'
+      : `edges ${movementClause(map, 'edge')}, so ${arrivalsInto(map, 'edge')}`
     step = {
       key: 'method',
-      heading: 'Follow the pieces',
-      text: parts.join(' '),
+      heading: 'Look for',
+      text: `${cornerClause.charAt(0).toUpperCase()}${cornerClause.slice(1)}; ${edgeClause}.`,
       highlight: lit,
       arrows: true,
     }
@@ -1295,18 +1283,18 @@ export function buildTeachingBrief(
 
   const landed = landedBlocks(resolved)
   const landedWords = [
-    landed.front ? `Front: ${BLOCK_READING[landed.front]}.` : null,
-    landed.right ? `Right: ${BLOCK_READING[landed.right]}.` : null,
+    landed.front ? `front ${BLOCK_READING[landed.front]}` : null,
+    landed.right ? `right ${BLOCK_READING[landed.right]}` : null,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(', ')
 
   return [
     step,
     {
       key: 'result',
-      heading: 'What that leaves',
-      text: `${landedWords} That is ${pll.name} perm.`,
+      heading: 'It landed as',
+      text: `${pll.name} perm — ${landedWords}.`,
     },
   ]
 }

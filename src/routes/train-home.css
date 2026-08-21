@@ -4,31 +4,16 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--gap-6);
+  align-items: center;
+  gap: var(--gap-5);
   width: 100%;
-  max-width: 52rem;
+  max-width: 46rem;
   margin-inline: auto;
   padding: var(--gap-6) var(--gap-5) calc(var(--gap-7) + env(safe-area-inset-bottom));
 }
 
-/* --- Today --------------------------------------------------------------- */
-
-.train-home__today {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--gap-4);
-  text-align: center;
-}
-
-.train-home__headline {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-2);
-}
-
 .train-home__title {
-  font-size: clamp(2.25rem, 7vw, 3.5rem);
+  font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -36,69 +21,67 @@
   font-variant-numeric: tabular-nums;
 }
 
-.train-home__lede {
-  max-width: 32rem;
-  color: var(--ink-dim);
-  font-size: 0.9375rem;
-  line-height: 1.55;
-}
+/* --- The four cards, one shape ------------------------------------------- */
 
-.train-home__go {
-  margin-block: var(--gap-2);
-}
-
-/* Learn and Review: the day's work, split by what it contains. */
-.train-home__split {
+.train-home__cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--gap-3);
   width: 100%;
 }
 
-.train-home__mode {
+.train-home__card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: var(--gap-4);
+  padding: var(--gap-4) var(--gap-5);
+  min-height: 5.5rem;
   border-radius: var(--radius-lg);
   background: var(--surface);
   text-align: left;
   transition: background-color var(--capture);
 }
 
-.train-home__mode:hover:not(:disabled) {
+.train-home__card:hover:not(:disabled) {
   background: var(--surface-strong);
 }
 
-.train-home__mode:disabled {
+.train-home__card:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-.train-home__mode b {
-  font-size: 1.0625rem;
+.train-home__card b {
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--ink-strong);
 }
 
-.train-home__mode i {
+.train-home__card i {
   font-style: normal;
   font-size: 0.8125rem;
-  color: var(--caution);
+  color: var(--ink-dim);
 }
 
-.train-home__mode .label {
-  margin-top: var(--gap-2);
-  font-size: 0.6875rem;
-  line-height: 1.4;
+/* Today is the one to press, so it is the one filled card. */
+.train-home__card[data-primary='true'] {
+  background: var(--caution);
+}
+
+.train-home__card[data-primary='true'] b,
+.train-home__card[data-primary='true'] i {
+  color: var(--ground-deep);
+}
+
+.train-home__card[data-primary='true']:hover:not(:disabled) {
+  background: var(--ink-strong);
 }
 
 .train-home__more {
-  padding: 0.5rem 0.9rem;
+  padding: 0.45rem 0.9rem;
   border-radius: var(--radius-pill);
   color: var(--ink-dim);
-  font-size: 0.6875rem;
   transition:
     background-color var(--capture),
     color var(--capture);
@@ -109,34 +92,24 @@
   color: var(--ink);
 }
 
-/* --- Pick one ------------------------------------------------------------ */
+/* --- Practise one case --------------------------------------------------- */
 
 .train-home__pick {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--gap-4);
-}
-
-.train-home__pick-head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-1);
+  gap: var(--gap-3);
 }
 
 .train-home__pick-title {
-  font-size: 1.0625rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--ink-strong);
 }
 
-.train-home__pick-head .label {
-  max-width: 34rem;
-  line-height: 1.45;
-}
-
 .train-home__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
   gap: var(--gap-2);
 }
 
@@ -144,12 +117,11 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 1px;
-  padding: 0.7rem 0.8rem;
-  border-radius: var(--radius);
+  padding: 0.55rem 0.25rem;
+  border-radius: var(--radius-sm);
   background: var(--surface);
-  text-align: left;
   transition: background-color var(--capture);
 }
 
@@ -164,12 +136,21 @@
 }
 
 .train-home__case .label {
-  font-size: 0.625rem;
+  font-size: 0.5625rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Progress at a glance: learned cases carry the accent. */
+.train-home__case[data-state='maintenance'] b {
+  color: var(--caution);
 }
 
 @media (pointer: coarse) {
   .train-home__case {
-    min-height: 3.25rem;
+    min-height: 3rem;
   }
 
   .train-home__more {
@@ -180,10 +161,5 @@
 @media (max-width: 34rem) {
   .train-home {
     padding-inline: var(--gap-4);
-    gap: var(--gap-5);
-  }
-
-  .train-home__split {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

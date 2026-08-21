@@ -6,6 +6,16 @@
   box-sizing: border-box;
 }
 
+/*
+ * The hidden attribute must always win. Its UA style is a plain `display:
+ * none`, which any authored `display: flex` on the same element silently
+ * defeats — which is exactly how the Cases list kept rendering underneath the
+ * case it was supposed to have handed the screen to.
+ */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body,
 #root {

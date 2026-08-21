@@ -51,6 +51,13 @@ export function Drill({
   const { phase, trial, exercise, feedback, settings, hintLevel } = session
 
   const revealed = phase === 'feedback'
+  /*
+   * Practice and the timed test answer by multiple choice regardless of the
+   * reveal/grid preference: both exist to measure picking the right PLL, and
+   * self-grading measures something else.
+   */
+  const answerMode: 'grid' | 'reveal' =
+    mode.kind === 'practice' || mode.kind === 'timed' ? 'grid' : settings.answerMode
 
   /*
    * The first run through a case teaches instead of testing: corners, then
@@ -151,7 +158,7 @@ export function Drill({
         event.preventDefault()
         if (phase === 'idle' || phase === 'finished') session.start(mode)
         else if (phase === 'presenting' && teaching) teachAdvance()
-        else if (phase === 'presenting' && settings.answerMode === 'reveal') session.reveal()
+        else if (phase === 'presenting' && answerMode === 'reveal') session.reveal()
         else if (phase === 'feedback' && feedback?.reason !== 'Grade yourself') session.next()
         return
       }
@@ -164,7 +171,7 @@ export function Drill({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, feedback, session, settings.answerMode, toggleArrows, teaching, teachAdvance, trial, leave, mode])
+  }, [phase, feedback, session, answerMode, toggleArrows, teaching, teachAdvance, trial, leave, mode])
 
   if (phase === 'idle' || phase === 'finished')
     return <DrillStandby session={session} mode={mode} onLeave={onLeave} />
@@ -189,10 +196,12 @@ export function Drill({
           {session.mode.kind !== 'guided' && (
             <span className="stage__mode label">
               {session.mode.kind === 'practice'
-                ? `Practising ${trial.pll.name} · not scored`
-                : session.mode.kind === 'learn'
-                  ? 'Learning'
-                  : 'Review'}
+                ? 'Practice · not scored'
+                : session.mode.kind === 'timed'
+                  ? 'Test'
+                  : session.mode.kind === 'learn'
+                    ? 'Learning'
+                    : 'Review'}
             </span>
           )}
           {/*
@@ -201,7 +210,7 @@ export function Drill({
             together no longer fit a phone without forcing the whole layout
             wider than the screen.
           */}
-          {exercise && (
+          {exercise && Number.isFinite(exercise.reps) && (
             <span className="stage__reps label">
               rep {exercise.rep} of {exercise.reps}
             </span>
@@ -248,9 +257,9 @@ export function Drill({
                 ? askSteps > 1
                   ? `New case · ${teachStep + 1} of ${askSteps}`
                   : 'New case'
-                : settings.answerMode === 'reveal'
+                : answerMode === 'reveal'
                   ? 'Which PLL does this leave?'
-                  : 'Pick the case, or type its name'}
+                  : 'Pick the case'}
             </p>
             {/*
               The scramble is here so the same rep can be done on a real cube:
@@ -309,7 +318,7 @@ export function Drill({
                 {teachStep < askSteps - 1 ? teaching[teachStep + 1].heading : 'Reveal'}{' '}
                 <kbd>Space</kbd>
               </Action>
-            ) : settings.answerMode === 'reveal' ? (
+            ) : answerMode === 'reveal' ? (
               <Action variant="primary" onClick={() => session.reveal()}>
                 Reveal <kbd>Space</kbd>
               </Action>
@@ -437,10 +446,7 @@ function DrillStandby({
       ) : firstEver ? (
         <>
           <h1 className="standby__title">Train the seam</h1>
-          <p className="standby__lede">
-            One OLL at a time, a few reps each. You get the case and your algorithm; you
-            name the PLL it will leave. Nothing is revealed until you commit.
-          </p>
+          <p className="standby__lede">Name the PLL each OLL will leave.</p>
         </>
       ) : (
         <>

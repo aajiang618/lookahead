@@ -343,16 +343,8 @@ function CaseDetail({
               </option>
             ))}
           </select>
-          <p className="case-detail__note">
-            {algIndex === 0
-              ? 'The common algorithm, used unless you pick another.'
-              : 'Your choice — kept for this case, and drilled against.'}
-          </p>
           {variantsDiffer && (
-            <p className="case-detail__warning">
-              These algorithms do not all leave the same PLL. Pick the one you actually
-              execute — the trainer is only right about this case for that one.
-            </p>
+            <p className="case-detail__warning">These variants leave different PLLs — pick the one you execute.</p>
           )}
           {oll.algs[algIndex]?.note && (
             <p className="case-detail__note">{oll.algs[algIndex].note}</p>

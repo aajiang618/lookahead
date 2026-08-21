@@ -1,8 +1,8 @@
 /*
- * The interface vocabulary. Soft corners, no borders, almost no lines.
+ * The interface vocabulary. White ground, soft corners, no borders, no lines.
  *
- * Grouping is done with a surface a few percent lighter than the ground rather
- * than with a rule — one fewer line on screen for the same effect. Nothing here
+ * Grouping is done with a tint a few percent darker than the ground rather than
+ * with a rule — one fewer line on screen for the same effect. Nothing here
  * casts a shadow: the softness is in the corners, not in fake depth.
  */
 
@@ -12,9 +12,6 @@
   display: flex;
   align-items: stretch;
   gap: 2px;
-  padding: 3px;
-  border-radius: var(--radius-pill);
-  background: var(--surface);
 }
 
 .fma__item {
@@ -51,8 +48,7 @@
   position: relative;
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
-  text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* --- Surfaces ------------------------------------------------------------ */
@@ -63,10 +59,13 @@
   background: var(--surface);
 }
 
+.panel + .panel {
+  margin-top: var(--gap-2);
+}
+
 .panel__label {
   margin-bottom: var(--gap-4);
-  font-size: 0.5625rem;
-  letter-spacing: 0.18em;
+  font-size: 0.75rem;
 }
 
 /* --- Readouts ------------------------------------------------------------ */
@@ -78,8 +77,7 @@
 }
 
 .readout-block__label {
-  font-size: 0.5625rem;
-  letter-spacing: 0.16em;
+  font-size: 0.75rem;
 }
 
 .readout-block__value {
@@ -106,7 +104,6 @@
   font-size: 0.625rem;
   color: var(--ink-dim);
   margin-left: 3px;
-  letter-spacing: 0.06em;
 }
 
 /* --- Annunciation -------------------------------------------------------- */
@@ -114,8 +111,7 @@
 .annunciation {
   min-height: 1.25rem;
   text-align: center;
-  font-size: 0.625rem;
-  letter-spacing: 0.16em;
+  font-size: 0.75rem;
   color: var(--ink-dim);
 }
 
@@ -130,14 +126,13 @@
 /* --- Actions ------------------------------------------------------------- */
 
 .action {
-  padding: 0.6rem 1.2rem;
+  padding: 0.7rem 1.4rem;
   border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--ink);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
-  text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 500;
   transition:
     color var(--capture),
     background-color var(--capture);

@@ -78,11 +78,13 @@ a {
   color: inherit;
 }
 
-/* Instrument lettering. */
+/*
+ * Captions. Plain sentence case: uppercase and 0.14em tracking were doing the
+ * work of a border once the borders were gone, and they were doing it loudly.
+ */
 .label {
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
-  text-transform: uppercase;
   font-weight: 500;
   color: var(--ink-dim);
 }

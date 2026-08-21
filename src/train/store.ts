@@ -136,7 +136,7 @@ export const DEFAULT_SETTINGS: Settings = {
   motorSeconds: DEFAULT_MOTOR_SECONDS,
   motorCalibrated: false,
   algChoice: {},
-  cubeZoom: 0.82,
+  cubeZoom: 0.7,
   headStart: 0,
   repsPerExercise: 4,
   showArrows: false,
@@ -287,13 +287,16 @@ export function saveProgress(progress: Progress): void {
   }
 }
 
-/** The cube used to be framed tight; anyone who never changed it gets the air. */
-const PREVIOUS_DEFAULT_ZOOM = 1.05
+/**
+ * The cube used to be framed tight. Anyone still sitting on a default they
+ * never chose gets the current framing; a zoom set by hand is left alone.
+ */
+const PREVIOUS_DEFAULT_ZOOMS = [1.05, 0.82]
 
 function migrate(progress: Progress): Progress {
   const base = emptyProgress()
   const settings = { ...base.settings, ...progress.settings, algChoice: progress.settings?.algChoice ?? {} }
-  if (settings.cubeZoom === PREVIOUS_DEFAULT_ZOOM) settings.cubeZoom = base.settings.cubeZoom
+  if (PREVIOUS_DEFAULT_ZOOMS.includes(settings.cubeZoom)) settings.cubeZoom = base.settings.cubeZoom
   return {
     ...base,
     ...progress,

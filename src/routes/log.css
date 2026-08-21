@@ -55,7 +55,7 @@
 }
 
 .trend__caption .label {
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
 }
 
 .trend__caption [data-tone='good'] {
@@ -214,7 +214,7 @@
 }
 
 .log__session-reason {
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--ink-dim);
   text-align: right;
   letter-spacing: 0.1em;

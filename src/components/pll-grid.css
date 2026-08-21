@@ -1,10 +1,12 @@
+/*
+ * The grid used to draw itself as a hairline lattice: 21 cells and 28 lines to
+ * hold them apart. Gaps and rounded cells say the same thing with none.
+ */
 .pll-grid {
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--hairline);
-  background: var(--rule);
-  border: var(--hairline) solid var(--rule);
+  gap: 4px;
   width: 100%;
 }
 
@@ -15,14 +17,15 @@
   align-items: center;
   gap: 2px;
   padding: 0.5rem 0.25rem 0.35rem;
-  background: var(--ground);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   transition:
     background-color var(--capture),
     opacity var(--capture);
 }
 
 .pll-grid__cell:hover:not(:disabled) {
-  background: var(--ground-lift);
+  background: var(--surface-strong);
 }
 
 .pll-grid__cell[data-playable='false'] {
@@ -30,7 +33,7 @@
 }
 
 .pll-grid__cell[data-state='matched'] {
-  background: var(--ground-lift);
+  background: var(--surface-strong);
 }
 
 .pll-grid__cell[data-state='matched'] .pll-grid__name {
@@ -45,12 +48,8 @@
   color: var(--warning);
 }
 
-.pll-grid__cell[data-state='wrong']::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: var(--hairline) solid var(--warning);
-  pointer-events: none;
+.pll-grid__cell[data-state='wrong'] {
+  background: var(--warning-dim);
 }
 
 .pll-grid__cell[data-state='correct'] .pll-grid__name {
@@ -59,14 +58,14 @@
 
 .pll-grid__box {
   position: absolute;
-  inset: 3px;
-  border: 1.5px solid var(--caution);
+  inset: 0;
+  border-radius: var(--radius-sm);
+  background: var(--caution-dim);
   pointer-events: none;
 }
 
 .pll-grid__name {
-  font-size: 0.5625rem;
-  letter-spacing: 0.1em;
+  font-size: 0.625rem;
   color: var(--ink-dim);
   transition: color var(--capture);
 }
@@ -81,12 +80,12 @@
   top: -1.75rem;
   left: 50%;
   transform: translateX(-50%);
-  padding: 0.2rem 0.5rem;
-  border: var(--hairline) solid var(--caution);
-  color: var(--caution);
+  padding: 0.25rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: var(--caution);
+  color: var(--ground-deep);
   font-size: 0.6875rem;
-  letter-spacing: 0.2em;
-  background: var(--ground);
+  letter-spacing: 0.1em;
 }
 
 @media (max-width: 60rem) {

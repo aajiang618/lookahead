@@ -44,26 +44,35 @@ Tokens live in `src/styles/tokens.css`.
 
 | Token | Value | Role |
 |---|---|---|
-| `--ground` | `#0b0e10` | Instrument charcoal. The only background. |
-| `--ground-deep` | `#070909` | Text on amber fills. |
-| `--ground-lift` | `#11161a` | Hover ground. The only "raised" value, and it is barely raised. |
-| `--ink` | `#e8e4d9` | Warm ivory. Primary symbology. **15.9:1** |
-| `--ink-strong` | `#fbf8f0` | Readings and headings. |
-| `--ink-dim` | `58%` ivory | **The floor for anything a person reads. 5.6:1** |
-| `--ink-faint` | `32%` ivory | 2.5:1 — **never text.** What little stroke work is left. |
-| `--ink-ghost` | `14%` ivory | Decorative rules. |
-| `--caution` | `#ffb020` | Active mode box, target bug, the one filled control. |
-| `--warning` | `#ff5c4d` | A missed answer. Nothing else. |
+| `--ground` | `#ffffff` | White. The only background. |
+| `--ground-deep` | `#ffffff` | Text that sits on a filled accent. |
+| `--ground-lift` | `#f4f5f6` | Hover ground. |
+| `--ink` | `#14181b` | Body and headings. **15.7:1** |
+| `--ink-strong` | `#05070a` | Readings and titles. **19.6:1** |
+| `--ink-dim` | `62%` ink | **The floor for anything a person reads. 6.4:1** |
+| `--ink-faint` | `34%` ink | **Never text.** What little stroke work is left. |
+| `--ink-ghost` | `12%` ink | Decorative rules. |
+| `--surface` / `--surface-strong` | `4%` / `8%` ink | Grouping, in place of a border. |
+| `--caution` | `#b45309` | The one filled control, and the one accent. |
+| `--warning` | `#b91c1c` | A missed answer. Nothing else. |
 
 Cube facelets (`--face-u/d/f/b/r/l`) are domain colours and appear only inside
 the 3D cube and the case diagrams.
 
-The contrast split is load-bearing and was a real defect once: `--ink-faint`
-carried body text at 2.5:1 before it was demoted to a stroke-only token.
+**The accent had to change with the ground.** The old signal amber `#ffb020`
+reads at 1.8:1 on white — it cannot carry text and it cannot be a button.
+`#b45309` reads at 5.0:1 on white *and* takes white text at 5.0:1, measured in
+the browser, so one token works as ink and as fill.
 
-**Ground is dark from the use scene, not from category habit** — a desk, at
-night or under a lamp, cube in hand, eyes moving between a physical object and
-a screen. A light ground would be the brighter thing in the room.
+The contrast split is load-bearing and was a real defect once: `--ink-faint`
+carried body text before it was demoted to a stroke-only token.
+
+**Ground is white because it was asked for.** The dark ground had a reason —
+a desk at night, cube in hand, a screen that should not be the brightest thing
+in the room — and that reason is now overruled by preference, which is a
+perfectly good reason of its own. What survives the swap is the rule that
+matters: the cube is the only saturated colour on screen, and on white it is the
+only dark mass as well.
 
 ## Type
 
@@ -71,8 +80,18 @@ a screen. A light ground would be the brighter thing in the room.
 - **Spline Sans Mono** — move notation only (`R U R' U'`), which is genuine
   notation, not a technical costume.
 
-Instrument lettering is the `.label` class: uppercase, `0.14em` tracking,
-`0.5625–0.6875rem`, `--ink-dim`. Used for every caption and control.
+Captions are the `.label` class: **plain sentence case, no tracking**,
+`0.75rem`, `--ink-dim`. Used for every caption and control.
+
+The caps and `0.14em` tracking that used to mark this out as an instrument were
+the loudest thing left once the lines came out, so they went too. Two knock-on
+repairs came with that, both caught by measurement rather than by eye:
+
+- Captions at `0.5rem` were legible as tracked capitals and simply small as
+  sentence case, so the floor came up to `0.6875rem`.
+- The drill header stopped fitting a phone. It carried an exercise number and a
+  rep counter; the exercise number is not something a solver can act on, so it
+  is gone rather than shrunk.
 
 No kicker or eyebrow sits above any heading; headings carry themselves.
 
@@ -108,11 +127,13 @@ reference are one surface rather than two. Log is history and settings.
 - Answer grid is **7 columns, fixed order, forever**. See below.
 - One max width (`--max-width`, 82rem); the log narrows to 58rem for reading.
 
-**The cube is framed loose.** `cubeZoom` defaults to 0.82, below the 1.0 that
-would fit its silhouette exactly, so there is air on every side. A cube pressed
-against the edges of its frame is harder to read at a glance than one with room
-around it, and glancing is the whole skill. Anyone still on the old tight
-default is migrated to the new one; a zoom they chose themselves is left alone.
+**The cube is framed loose.** `cubeZoom` defaults to 0.7, well below the 1.0
+that would fit its silhouette exactly, so there is a good deal of air on every
+side. A cube pressed against the edges of its frame is harder to read at a
+glance than one with room around it, and glancing is the whole skill. Anyone
+still sitting on a default they never chose is migrated forward — the list of
+superseded defaults lives in `store.ts` — while a zoom set by hand is left
+alone.
 
 ## The drill is one screen
 

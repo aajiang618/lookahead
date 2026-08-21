@@ -39,7 +39,7 @@
   margin: 0 var(--gap-5) var(--gap-3);
   padding: var(--gap-3) var(--gap-4);
   border-radius: var(--radius);
-  background: rgb(255 92 77 / 12%);
+  background: rgb(185 28 28 / 9%);
   color: var(--warning);
   text-transform: none;
   letter-spacing: 0.04em;
@@ -57,7 +57,6 @@
   color: var(--ground-deep);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
-  text-transform: uppercase;
   font-weight: 600;
   text-decoration: none;
 }

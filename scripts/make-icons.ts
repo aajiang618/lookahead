@@ -2,8 +2,8 @@
  * The home-screen icon, drawn rather than pasted.
  *
  * iOS wants a real PNG for `apple-touch-icon`, and the app's mark is four
- * corner brackets around a boresight — pure axis-aligned stroke, so it
- * rasterises exactly with filled rectangles and needs no drawing library.
+ * corner brackets around a cross — pure axis-aligned stroke, so it rasterises
+ * exactly with filled rectangles and needs no drawing library.
  * Generating it keeps the icon honest: it is built from the same three colours
  * as the interface, and regenerating after a palette change is one command.
  *
@@ -15,9 +15,9 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const GROUND = [0x0b, 0x0e, 0x10]
-const INK = [0xe8, 0xe4, 0xd9]
-const CAUTION = [0xff, 0xb0, 0x20]
+const GROUND = [0xff, 0xff, 0xff]
+const INK = [0x14, 0x18, 0x1b]
+const CAUTION = [0xb4, 0x53, 0x09]
 
 type RGB = number[]
 

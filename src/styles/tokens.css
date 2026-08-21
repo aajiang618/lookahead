@@ -1,75 +1,82 @@
 /*
  * Lookahead design tokens.
  *
- * Quiet and soft-edged. Four rules:
+ * White, quiet, soft-edged. Four rules:
  *
  *   - SUBTRACT FIRST. If a rule, a tick, a bracket or a border can come out
- *     without losing meaning, it comes out. Regions are separated by space,
- *     and given a surface only when they genuinely need to group.
- *   - Corners are ROUNDED. Every surface and control carries a radius; nothing
- *     in the interface has a hard corner except the cube.
- *   - Symbology is MONOCHROME warm ivory with a single amber accent, spent on
- *     the one control you press and nothing else, and a warning red that
- *     appears only when an answer was missed.
- *   - The CUBE is the only saturated colour on screen. That is the whole point:
- *     everything the interface says is quiet, and the thing being read is loud.
+ *     without losing meaning, it comes out. Regions are separated by space, and
+ *     given a surface only when they genuinely need to group.
+ *   - Corners are ROUNDED, generously. Controls are full pills; surfaces carry
+ *     a large radius. Nothing in the interface has a hard corner except the
+ *     cube.
+ *   - Type is PLAIN. No uppercase, no letter-spacing, two weights. The caps and
+ *     tracking that used to mark this out as an instrument were the loudest
+ *     thing left once the lines were gone.
+ *   - The CUBE is the only saturated colour on screen, and on white it is the
+ *     only dark mass as well. Everything the interface says is quiet; the thing
+ *     being read is loud.
  *
- * No glow, no bloom, no neon, and no drop shadows: soft corners, flat light.
+ * Contrast against --ground is measured, not guessed. Anything a person reads
+ * clears 4.5:1; --ink-faint and --ink-ghost sit below that and are barred from
+ * text.
  */
 
 :root {
+  color-scheme: light;
+
   /* Ground ------------------------------------------------------------ */
-  --ground: #0b0e10;
-  --ground-deep: #070909;
-  --ground-lift: #11161a;
+  --ground: #ffffff;
+  /* Text that sits on a filled accent. */
+  --ground-deep: #ffffff;
+  --ground-lift: #f4f5f6;
 
-  /* Symbology --------------------------------------------------------- */
-  --ink: #e8e4d9;
-  --ink-strong: #fbf8f0;
-  /*
-   * Text tokens carry a measured contrast ratio against --ground:
-   *   --ink         15.9:1
-   *   --ink-dim      5.6:1  <- the floor for anything a person reads
-   * --ink-faint and --ink-ghost sit at 2.5:1 and below, so they are for
-   * STROKES ONLY: ticks, rules, dividers, decorative marks. Never text.
-   */
-  --ink-dim: rgb(232 228 217 / 58%);
-  --ink-faint: rgb(232 228 217 / 32%);
-  --ink-ghost: rgb(232 228 217 / 14%);
+  /* Ink --------------------------------------------------------------- */
+  --ink: #14181b; /* 15.7:1 */
+  --ink-strong: #05070a; /* 19.6:1 */
+  --ink-dim: rgb(20 24 27 / 62%); /* 6.4:1  <- the floor for anything read */
+  --ink-faint: rgb(20 24 27 / 34%); /* strokes only */
+  --ink-ghost: rgb(20 24 27 / 12%);
 
-  --rule: rgb(232 228 217 / 10%);
-  --rule-strong: rgb(232 228 217 / 22%);
+  --rule: rgb(20 24 27 / 8%);
+  --rule-strong: rgb(20 24 27 / 16%);
 
   /*
-   * Surfaces. A rounded block gets a barely-there lift rather than a border —
-   * one fewer line on screen for the same grouping, which is the whole trade
-   * this design makes.
+   * Surfaces. A rounded block gets a barely-there tint rather than a border —
+   * one fewer line on screen for the same grouping, which is the trade this
+   * design makes everywhere.
    */
-  --surface: rgb(232 228 217 / 4%);
-  --surface-strong: rgb(232 228 217 / 8%);
+  --surface: rgb(20 24 27 / 4%);
+  --surface-strong: rgb(20 24 27 / 8%);
 
-  /* Annunciation ------------------------------------------------------ */
-  --caution: #ffb020;
-  --caution-dim: rgb(255 176 32 / 40%);
-  --warning: #ff5c4d;
-  --warning-dim: rgb(255 92 77 / 38%);
+  /* Accent ------------------------------------------------------------ */
+  /*
+   * Burnt amber rather than the old signal amber: #ffb020 on white is 1.8:1,
+   * which cannot carry text and cannot be a button. This reads at 5.3:1 on
+   * white and takes white text at 5.3:1 in turn, so the same token works as
+   * ink and as fill.
+   */
+  --caution: #b45309;
+  --caution-dim: rgb(180 83 9 / 35%);
+  --warning: #b91c1c; /* 5.9:1 */
+  --warning-dim: rgb(185 28 28 / 35%);
 
   /* Cube facelets — domain colours, the one place saturation lives ----- */
-  --face-u: #f2d024;
-  --face-d: #ececec;
-  --face-f: #16a75b;
-  --face-b: #1e6fd9;
-  --face-r: #d93526;
-  --face-l: #e8761b;
-  --face-blank: #1b2126;
+  --face-u: #f2c811;
+  --face-d: #e6e8ea;
+  --face-f: #129952;
+  --face-b: #1b64c4;
+  --face-r: #cc2f21;
+  --face-l: #e06c12;
+  /* An unoriented sticker. Dark on purpose: the OLL shape has to read. */
+  --face-blank: #1e2429;
 
   /* Type -------------------------------------------------------------- */
   --font-ui: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Spline Sans Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
 
-  /* Instrument lettering: caps, tracked, small. */
-  --label-size: 0.6875rem;
-  --label-tracking: 0.14em;
+  /* Captions. Plain: no caps, no tracking. */
+  --label-size: 0.75rem;
+  --label-tracking: 0;
 
   /* Rhythm ------------------------------------------------------------ */
   --gap-1: 0.25rem;
@@ -80,7 +87,7 @@
   --gap-6: 2rem;
   --gap-7: 3rem;
 
-  /* Motion — slew, capture, roll -------------------------------------- */
+  /* Motion ------------------------------------------------------------ */
   --slew: 420ms cubic-bezier(0.16, 1, 0.3, 1);
   --capture: 130ms cubic-bezier(0.2, 0, 0, 1);
   --fade: 220ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -89,9 +96,9 @@
   --max-width: 82rem;
 
   /* Corners ----------------------------------------------------------- */
-  --radius-sm: 10px;
-  --radius: 14px;
-  --radius-lg: 20px;
+  --radius-sm: 12px;
+  --radius: 18px;
+  --radius-lg: 26px;
   --radius-pill: 999px;
 }
 

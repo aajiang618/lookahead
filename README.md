@@ -16,6 +16,11 @@ npm run dev
 
 ## The three screens
 
+The interface is white, plain-typed and soft-cornered: no borders anywhere, no
+uppercase, one burnt-amber accent spent on the single control you press, and the
+cube framed loose with air on every side. The cube is the only saturated colour
+on screen and the only hard-cornered thing in the app.
+
 **Train** — the drill, and it is almost entirely cube. A thin strip above (which
 exercise, which OLL, your algorithm), the cube filling everything else, a thin
 strip below. Nothing sits beside it, and the strips hold a fixed height so the

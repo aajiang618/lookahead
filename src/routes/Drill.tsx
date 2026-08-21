@@ -158,15 +158,18 @@ export function Drill({ session }: { session: Session }) {
     <div className="stage" data-phase={phase} data-teaching={Boolean(teaching)}>
       <header className="stage__head">
         <div className="stage__where">
+          <h1 className="stage__case">{trial.oll.name}</h1>
+          {/*
+            The exercise number used to sit here too. It is not something a
+            solver can act on, and at plain sentence case the two counters
+            together no longer fit a phone without forcing the whole layout
+            wider than the screen.
+          */}
           {exercise && (
-            <span className="label">
-              Exercise {exercise.number}
-              <i className="stage__reps">
-                · rep {exercise.rep} of {exercise.reps}
-              </i>
+            <span className="stage__reps label">
+              rep {exercise.rep} of {exercise.reps}
             </span>
           )}
-          <h1 className="stage__case">{trial.oll.name}</h1>
         </div>
         <p className="stage__alg mono">
             {trial.remaining || trial.drill.ollAlg}

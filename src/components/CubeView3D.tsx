@@ -100,7 +100,7 @@ export const CubeView3D = forwardRef<CubeHandle, CubeView3DProps>(function CubeV
     focusLastLayer = false,
     highlight,
     arrows,
-    zoom = 0.82,
+    zoom = 0.7,
     interactive = true,
     className,
     onReady,

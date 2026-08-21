@@ -55,7 +55,7 @@
 .cases__filter-item {
   padding: 0.35rem 0.75rem;
   border-radius: var(--radius-pill);
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--ink-dim);
   transition: color var(--capture), background-color var(--capture);
 }
@@ -118,9 +118,7 @@
 
 .case-row__group {
   font-style: normal;
-  font-size: 0.5rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.6875rem;
   font-weight: 500;
   color: var(--ink-dim);
 }
@@ -183,13 +181,13 @@
 }
 
 .case-detail__group {
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--ink-dim);
 }
 
 .case-detail__status {
   margin-left: auto;
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--ink-dim);
 }
 
@@ -234,8 +232,7 @@
 }
 
 .case-detail__block > .label {
-  font-size: 0.5rem;
-  letter-spacing: 0.16em;
+  font-size: 0.6875rem;
 }
 
 .case-detail__block select {
@@ -277,7 +274,6 @@
   color: var(--ink-dim);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
-  text-transform: uppercase;
   font-weight: 600;
   transition: color var(--capture), background-color var(--capture);
 }

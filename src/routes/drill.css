@@ -5,6 +5,13 @@
 
 .stage {
   display: grid;
+  /*
+   * An explicit minmax(0, …) column, or the row contents set the width: a
+   * nowrap line of move notation in the header has a min-content width, the
+   * implicit `auto` column adopts it, and every row — the cube included —
+   * grows past the viewport.
+   */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   flex: 1;
   min-height: 0;
@@ -29,14 +36,12 @@
 }
 
 .stage__where > .label {
-  font-size: 0.5rem;
   white-space: nowrap;
 }
 
 .stage__reps {
   font-style: normal;
-  margin-left: 0.4rem;
-  color: var(--caution);
+  color: var(--ink-dim);
 }
 
 .stage__case {
@@ -58,9 +63,7 @@
 .stage__headstart {
   font-style: normal;
   font-family: var(--font-ui);
-  font-size: 0.5rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.6875rem;
   color: var(--caution);
 }
 
@@ -92,7 +95,7 @@
   padding: 0.3rem 0.75rem;
   border-radius: var(--radius-pill);
   background: var(--surface);
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--caution);
   pointer-events: none;
 }
@@ -109,6 +112,8 @@
    */
   min-height: 10.5rem;
   display: grid;
+  /* Same reason as the stage: an auto column adopts its content's width. */
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
 }
 
@@ -205,9 +210,7 @@
 
 .stage__verdict {
   font-style: normal;
-  font-size: 0.5625rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.6875rem;
   font-weight: 500;
   color: var(--warning);
 }
@@ -240,7 +243,6 @@
   color: var(--ink-dim);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
-  text-transform: uppercase;
   font-weight: 600;
   transition:
     color var(--capture),
@@ -260,7 +262,7 @@
 .stage__toggle--quiet {
   background: none;
   padding: 0.35rem 0.6rem;
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
 }
 
 .stage__toggle--quiet:hover {
@@ -270,12 +272,12 @@
 .action kbd,
 .stage__toggle kbd {
   font: inherit;
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   margin-left: 0.5rem;
   padding: 1px 5px;
   border-radius: var(--radius-sm);
-  background: rgb(0 0 0 / 18%);
-  opacity: 0.55;
+  background: rgb(20 24 27 / 14%);
+  opacity: 0.7;
 }
 
 /* --- Standby ------------------------------------------------------------- */
@@ -369,8 +371,8 @@
   }
 
   .stage__alg {
-    font-size: 0.6875rem;
-    flex-basis: 100%;
+    width: 100%;
+    min-width: 0;
   }
 
   .stage__foot {
@@ -381,12 +383,33 @@
   .stage__answer {
     flex-direction: column;
     align-items: stretch;
+    /*
+     * Stacked, this must not wrap: a wrapping COLUMN flex container wraps on
+     * the horizontal axis, so a child wider than the strip starts a second
+     * column and drags the whole layout past the edge of the screen.
+     */
+    flex-wrap: nowrap;
     gap: var(--gap-3);
   }
 
   .stage__controls > * {
     flex: 1;
+    /*
+     * The 12rem thumb-target minimum is right for one button in the middle of
+     * the strip and wrong for two side by side: 2 x 192px does not fit a phone.
+     * Sharing the row equally still leaves each of them well over 44px.
+     */
+    min-width: 0;
     text-align: center;
+  }
+
+  /*
+   * Equal halves for the self-grade pair. "Missed" and "Had it" are one
+   * decision with two answers, and a 83px button beside a 192px one reads as a
+   * recommendation.
+   */
+  .stage__controls .action[data-variant='primary'] {
+    min-width: 0;
   }
 }
 
@@ -426,7 +449,7 @@
 
 .stage__teach-head {
   display: block;
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--caution);
   margin-bottom: 0.25rem;
 }
@@ -472,7 +495,7 @@
   }
 
   .stage__toggle--quiet {
-    font-size: 0.5625rem;
+    font-size: 0.6875rem;
   }
 
   .stage__aids {

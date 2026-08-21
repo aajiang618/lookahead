@@ -148,7 +148,11 @@
    * laptop after the type got plainer — the old 10.5rem quietly stopped
    * covering it, and the cube grew 55px every time an answer appeared.
    */
-  min-height: 14.5rem;
+  /*
+   * Measured, not guessed: the ask branch is the taller of the two and it now
+   * carries a row of four options. 306px at 375px wide, 264px on a laptop.
+   */
+  min-height: 16.5rem;
   display: grid;
   /* Same reason as the stage: an auto column adopts its content's width. */
   grid-template-columns: minmax(0, 1fr);
@@ -420,7 +424,7 @@
 
   .stage__foot {
     padding: var(--gap-3);
-    min-height: 16.5rem;
+    min-height: 19.5rem;
   }
 
   .stage__answer {

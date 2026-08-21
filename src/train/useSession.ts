@@ -82,6 +82,13 @@ export interface Trial {
   resolved: string
   /** True while the case is being taught rather than tested. */
   encoding: boolean
+  /**
+   * How many introducing reps this case has already had. Only the first one
+   * teaches: after that the lesson has been given, and four readings of it in a
+   * row is not learning, it is copying. The rest of the introduction tests —
+   * with the same sentence shown on the answer.
+   */
+  encodeIndex: number
   /** Moves of the OLL already executed when the drill is shown. */
   headStart: number
   /** The moves still to come — what the solver must read through. */
@@ -239,6 +246,7 @@ export function useSession() {
           : item
             ? isEncoding(item)
             : false,
+      encodeIndex: item?.encodes ?? 0,
     }
   }, [])
 

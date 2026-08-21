@@ -114,10 +114,10 @@ export function Log({ session }: { session: Session }) {
             <select
               value={settings.answerMode}
               onChange={(e) =>
-                session.updateSettings({ answerMode: e.target.value as 'grid' | 'reveal' })
+                session.updateSettings({ answerMode: e.target.value as 'choices' | 'reveal' })
               }
             >
-              <option value="grid">Pick from the grid</option>
+              <option value="choices">Pick from four</option>
               <option value="reveal">Reveal and self-grade</option>
             </select>
           </label>

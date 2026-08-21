@@ -8,11 +8,13 @@ import { DEFAULT_MOTOR_SECONDS } from './latency.ts'
 
 export const STORAGE_KEY = 'lookahead.progress.v1'
 /**
- * Version 2 resets learning state on load. The lessons were rebuilt around the
- * colour reading and progress earned against the old ones would grade the new
- * material as already known; settings — algorithm choices included — survive.
+ * Bumping this resets learning state on load, keeping settings. Done twice
+ * now, both times because the lessons changed enough that progress earned
+ * against the old ones would grade the new material as already known:
+ * version 2 for the colour reading, version 3 for pattern-first teaching with
+ * multiple choice throughout.
  */
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 export type ItemPhase = 'locked' | 'introducing' | 'building' | 'maintenance'
 export type LeechKind = 'none' | 'accuracy' | 'fluency'
@@ -92,7 +94,12 @@ export interface ItemProgress {
 export interface Settings {
   /** Target session length in seconds. */
   sessionSeconds: number
-  answerMode: 'grid' | 'reveal'
+  /**
+   * How a rep is answered. `choices` is four options; `reveal` shows the answer
+   * and asks you to grade yourself, which measures honesty rather than
+   * recognition and is therefore not the default.
+   */
+  answerMode: 'choices' | 'reveal'
   varyAngle: boolean
   varyAuf: boolean
   reduceMotion: boolean
@@ -138,7 +145,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   sessionSeconds: 300,
-  answerMode: 'reveal',
+  answerMode: 'choices',
   varyAngle: true,
   varyAuf: true,
   reduceMotion: false,
@@ -313,7 +320,14 @@ function migrate(progress: Progress): Progress {
     testCases: progress.settings?.testCases ?? [],
   }
   if (PREVIOUS_DEFAULT_ZOOMS.includes(settings.cubeZoom)) settings.cubeZoom = base.settings.cubeZoom
-  if ((progress.version ?? 1) < 2) {
+  if ((progress.version ?? 1) < SCHEMA_VERSION) {
+    /*
+     * `reveal` used to be the default answering mode, so every profile carries
+     * it whether or not anyone chose it — and carrying it forward would mean
+     * nobody ever saw the four options. Same trap as the cube zoom: a
+     * superseded default is not a preference.
+     */
+    if (settings.answerMode === 'reveal') settings.answerMode = base.settings.answerMode
     return { ...base, settings }
   }
   return {

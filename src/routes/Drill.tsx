@@ -18,15 +18,12 @@ import { CubeView3D, type CubeHandle } from '../components/CubeView3D.tsx'
 import { CaseDiagram } from '../components/CaseDiagram.tsx'
 import { OLL_CASES } from '../cube/cases.ts'
 import { predictItemId } from '../train/curriculum.ts'
-import { PllGrid } from '../components/PllGrid.tsx'
 import { PllChoices } from '../components/PllChoices.tsx'
 import { Action } from '../components/Hud.tsx'
 import { pieceMapOf } from '../cube/tracking.ts'
 import {
-  buildRecognitionBrief,
   buildTeachingBrief,
   hintsFor,
-  readDrill,
   recognitionArrows,
 } from '../cube/recognition.ts'
 import { SPEED_TIERS } from '../train/latency.ts'
@@ -59,8 +56,14 @@ export function Drill({
    * reveal/grid preference: both exist to measure picking the right PLL, and
    * self-grading measures something else.
    */
-  const answerMode: 'grid' | 'reveal' =
-    mode.kind === 'practice' || mode.kind === 'timed' ? 'grid' : settings.answerMode
+  /*
+   * Four options everywhere a rep is a test — review included. Reveal-and-
+   * self-grade stays available in settings for anyone who would rather say the
+   * answer out loud, but a session that teaches a case and then asks you to
+   * grade yourself on it never actually checks whether you knew it.
+   */
+  const answerMode: 'choices' | 'reveal' =
+    settings.answerMode === 'reveal' && mode.kind !== 'timed' ? 'reveal' : 'choices'
   /*
    * The timed test hides the cube behind the scramble until the solver says
    * they are looking. Recognition is being measured, and setting the case up on
@@ -83,9 +86,14 @@ export function Drill({
    * case has been introduced, since a hint on a rep that was never a test is
    * a worse copy of the lesson already showing.
    */
+  /*
+   * Only the FIRST introducing rep teaches. The lesson is given once and the
+   * rest of the introduction tests against it — reading the same sentence four
+   * times in a row is copying, not learning.
+   */
   const teaching = useMemo(
     () =>
-      trial?.encoding
+      trial?.encoding && trial.encodeIndex === 0
         ? buildTeachingBrief(
             trial.oll,
             trial.drill.ollAlg,
@@ -104,7 +112,6 @@ export function Drill({
   // The last step is the conclusion; it belongs with the revealed cube.
   const askSteps = teaching ? teaching.length - 1 : 0
   const teachAsk = teaching ? teaching[Math.min(teachStep, askSteps - 1)] : null
-  const teachResult = teaching ? teaching[teaching.length - 1] : null
   const teachAdvance = useCallback(() => {
     if (teachStep < askSteps - 1) setTeachStep((n) => n + 1)
     else session.reveal()
@@ -130,13 +137,22 @@ export function Drill({
     return recognitionArrows(pieceMapOf(trial.drill.ollAlg))
   }, [trial, settings.showArrows, hintWantsArrows, revealed, teachAsk])
 
-  const brief = useMemo(
+  /*
+   * The same sentence the lesson gave, shown again on every answer. Review used
+   * to explain itself differently from the lesson that taught it, which meant
+   * meeting a case twice and being told about it in two vocabularies.
+   */
+  const explanation = useMemo(
     () =>
-      revealed && trial ? buildRecognitionBrief(trial.oll, trial.drill.ollAlg) : null,
-    [revealed, trial],
-  )
-  const reading = useMemo(
-    () => (revealed && trial ? readDrill(trial.resolved) : null),
+      revealed && trial
+        ? buildTeachingBrief(
+            trial.oll,
+            trial.drill.ollAlg,
+            trial.drill.state,
+            trial.resolved,
+            trial.pll,
+          )[0].text
+        : null,
     [revealed, trial],
   )
 
@@ -361,7 +377,7 @@ export function Drill({
               <Action variant="primary" onClick={() => session.reveal()}>
                 Reveal <kbd>Space</kbd>
               </Action>
-            ) : timed ? (
+            ) : (
               <PllChoices
                 answer={trial.pll}
                 resolved={trial.resolved}
@@ -370,8 +386,6 @@ export function Drill({
                 revealed={false}
                 onPick={(id) => session.commit(id)}
               />
-            ) : (
-              <PllGrid onPick={(id) => session.commit(id)} />
             )}
           </motion.div>
         ) : (
@@ -401,18 +415,7 @@ export function Drill({
                       </i>
                     )}
                   </h2>
-                  {teachResult && (
-                    <p className="stage__hint stage__hint--teach">{teachResult.text}</p>
-                  )}
-                  <p className="stage__hint">
-                    {trial.pll.recognition.summary}
-                    {reading && reading.candidates.length > 1 && (
-                      <> Pattern alone leaves {reading.candidates.map((c) => c.name).join(' or ')}.</>
-                    )}
-                  </p>
-                  {brief?.tips[0] && (
-                    <p className="stage__hint stage__hint--quiet">{brief.tips[0]}</p>
-                  )}
+                  {explanation && <p className="stage__hint">{explanation}</p>}
                 </div>
               </div>
 

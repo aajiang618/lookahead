@@ -385,6 +385,12 @@
 
 /* The algorithm picker is a thumb target on a phone, not a mouse target. */
 @media (pointer: coarse) {
+  /* Flagged by measurement: the filter chips were 29px on a touch screen. */
+  .cases__filter-item {
+    min-height: 2.5rem;
+    padding-inline: 1rem;
+  }
+
   .case-detail__block select {
     min-height: 2.75rem;
     font-size: 1rem;

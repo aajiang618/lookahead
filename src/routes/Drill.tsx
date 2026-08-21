@@ -16,7 +16,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CubeView3D, type CubeHandle } from '../components/CubeView3D.tsx'
 import { CaseDiagram } from '../components/CaseDiagram.tsx'
+import { OLL_CASES } from '../cube/cases.ts'
+import { predictItemId } from '../train/curriculum.ts'
 import { PllGrid } from '../components/PllGrid.tsx'
+import { PllChoices } from '../components/PllChoices.tsx'
 import { Action } from '../components/Hud.tsx'
 import { pieceMapOf } from '../cube/tracking.ts'
 import {
@@ -58,6 +61,20 @@ export function Drill({
    */
   const answerMode: 'grid' | 'reveal' =
     mode.kind === 'practice' || mode.kind === 'timed' ? 'grid' : settings.answerMode
+  /*
+   * The timed test hides the cube behind the scramble until the solver says
+   * they are looking. Recognition is being measured, and setting the case up on
+   * a real cube is not recognition.
+   */
+  const timed = mode.kind === 'timed'
+  const [looking, setLooking] = useState(!timed)
+  useEffect(() => {
+    setLooking(!timed)
+  }, [trial, timed])
+  const startLooking = useCallback(() => {
+    setLooking(true)
+    session.beginLooking()
+  }, [session])
 
   /*
    * The first run through a case teaches instead of testing: corners, then
@@ -181,6 +198,28 @@ export function Drill({
 
   return (
     <div className="stage" data-phase={phase} data-teaching={Boolean(teaching)}>
+      {/*
+        The scramble, alone and full screen, until the solver taps. Everything
+        else in the drill is laid out behind it and does not move when it goes.
+      */}
+      {!looking && (
+        <div className="stage__setup">
+          {/*
+            The whole panel is the tap target — you should not have to aim
+            while holding a cube — with the case picker layered above it, since
+            "which cases am I being tested on" is a question you ask here and
+            nowhere else.
+          */}
+          <button type="button" className="stage__setup-tap" onClick={startLooking}>
+            <span className="stage__setup-label label">Apply from solved</span>
+            <span className="stage__setup-scramble mono">{trial.drill.scramble}</span>
+            <span className="stage__setup-go label">Tap when you are looking at it</span>
+          </button>
+          <div className="stage__setup-picker">
+            <TestPicker session={session} />
+          </div>
+        </div>
+      )}
       <header className="stage__head">
         <button
           type="button"
@@ -322,6 +361,15 @@ export function Drill({
               <Action variant="primary" onClick={() => session.reveal()}>
                 Reveal <kbd>Space</kbd>
               </Action>
+            ) : timed ? (
+              <PllChoices
+                answer={trial.pll}
+                resolved={trial.resolved}
+                seed={trial.drill.seed}
+                chosenId={null}
+                revealed={false}
+                onPick={(id) => session.commit(id)}
+              />
             ) : (
               <PllGrid onPick={(id) => session.commit(id)} />
             )}
@@ -403,6 +451,65 @@ export function Drill({
 // Standby
 // ---------------------------------------------------------------------------
 
+/**
+ * Which cases the timed test draws from.
+ *
+ * Only cases the schedule has already unlocked: testing something you have
+ * never been shown measures nothing. Empty selection means all of them, which
+ * is both the default and the thing most people want.
+ */
+function TestPicker({ session }: { session: Session }) {
+  const { progress, settings } = session
+  const unlocked = OLL_CASES.filter((oll) => {
+    const item = progress.items[predictItemId(oll.id)]
+    return item && item.phase !== 'locked'
+  })
+  const chosen = settings.testCases
+  const isOn = (id: string) => chosen.length === 0 || chosen.includes(id)
+
+  const toggle = (id: string) => {
+    const explicit = chosen.length === 0 ? unlocked.map((o) => o.id) : chosen
+    const next = explicit.includes(id)
+      ? explicit.filter((x) => x !== id)
+      : [...explicit, id]
+    // Everything selected is the same as no selection, and says so more simply.
+    session.updateSettings({ testCases: next.length === unlocked.length ? [] : next })
+  }
+
+  if (unlocked.length === 0) return null
+
+  return (
+    <details className="picker">
+      <summary className="picker__summary label">
+        Cases · {chosen.length === 0 ? `all ${unlocked.length}` : `${chosen.length} of ${unlocked.length}`}
+      </summary>
+      <div className="picker__body">
+        <div className="picker__all">
+          <button type="button" className="label" onClick={() => session.updateSettings({ testCases: [] })}>
+            Select all
+          </button>
+        </div>
+        <ul className="picker__grid">
+          {unlocked.map((oll) => (
+            <li key={oll.id}>
+              <button
+                type="button"
+                className="picker__case"
+                data-on={isOn(oll.id)}
+                onClick={() => toggle(oll.id)}
+                title={oll.name}
+              >
+                <CaseDiagram facelets={oll.state} mode="orientation" size={34} />
+                <b>{oll.number}</b>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  )
+}
+
 function DrillStandby({
   session,
   mode,
@@ -466,6 +573,8 @@ function DrillStandby({
           )}
         </>
       )}
+
+      {mode.kind === 'timed' && <TestPicker session={session} />}
 
       <div className="standby__go">
         <Action variant="primary" onClick={() => session.start(mode)}>

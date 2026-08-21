@@ -113,6 +113,11 @@ export interface Settings {
    * edges of its frame is harder to read than one with air around it, and the
    * last layer is read at a glance rather than inspected.
    */
+  /**
+   * Which OLLs the timed test draws from, by case id. Empty means everything
+   * unlocked — the common case, and the one that needs no explaining.
+   */
+  testCases: string[]
   cubeZoom: number
   /** Drill prediction from part-way through the algorithm, as a move count. */
   headStart: number
@@ -141,6 +146,7 @@ export const DEFAULT_SETTINGS: Settings = {
   motorSeconds: DEFAULT_MOTOR_SECONDS,
   motorCalibrated: false,
   algChoice: {},
+  testCases: [],
   cubeZoom: 0.7,
   headStart: 0,
   repsPerExercise: 4,
@@ -300,7 +306,12 @@ const PREVIOUS_DEFAULT_ZOOMS = [1.05, 0.82]
 
 function migrate(progress: Progress): Progress {
   const base = emptyProgress()
-  const settings = { ...base.settings, ...progress.settings, algChoice: progress.settings?.algChoice ?? {} }
+  const settings = {
+    ...base.settings,
+    ...progress.settings,
+    algChoice: progress.settings?.algChoice ?? {},
+    testCases: progress.settings?.testCases ?? [],
+  }
   if (PREVIOUS_DEFAULT_ZOOMS.includes(settings.cubeZoom)) settings.cubeZoom = base.settings.cubeZoom
   if ((progress.version ?? 1) < 2) {
     return { ...base, settings }

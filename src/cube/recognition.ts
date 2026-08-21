@@ -1240,7 +1240,7 @@ export function buildTeachingBrief(
 
   const first = comparisons[0]
   const decider = first
-    ? `; then ${first.a.where} vs ${first.b.where} — ` +
+    ? `${first.a.where} vs ${first.b.where} — ` +
       first.branches
         .map((b) => `${RELATION_SHORT[b.relation]} → ${candidateWords(b.candidates, 3)}`)
         .join(', ') +
@@ -1252,17 +1252,40 @@ export function buildTeachingBrief(
    * finish it — the comparison that does. Semicolons carry the structure; the
    * old three-clause prose carried words.
    */
+  /*
+   * The sentence leads with the thing to MEMORISE: the pair of blocks this case
+   * lands in, and the PLL that pair means. The stickers you read it from come
+   * second — they are how you get there today, but "headlights and a 2-bar is
+   * Ja" is what you want left in your head in a month.
+   */
+  const landedNow = landedBlocks(resolved)
+  /*
+   * What ELSE lands looking like this. The block pair is not unique — it leaves
+   * 2.6 cases on average — so "that pair is Rb" would be teaching a rule that is
+   * false four times out of ten. The alike set comes from the same joint
+   * corner/edge classification the rest of the app is built on.
+   */
+  const alike = readDrill(resolved).candidates
+  const others = alike.filter((c) => c.id !== pll.id).map((c) => c.name)
+  const blocks =
+    landedNow.front && landedNow.right
+      ? `Front ${BLOCK_READING[landedNow.front]}, right ${BLOCK_READING[landedNow.right]}`
+      : `This`
+  const signature =
+    others.length === 0
+      ? `${blocks} — only ${pll.name} reads like that`
+      : `${blocks} — ${pll.name}, sharing it with ${listOf(others)}`
+
   let step: TeachingStep
   if (choice.method === 'pattern') {
     step = {
       key: 'method',
-      heading: 'Look for',
+      heading: 'Learn the pattern',
       text:
-        `Front ${rowStickers(read.front)}${read.frontPattern ? ` → ${BLOCK_READING[read.frontPattern]}` : ''}; ` +
-        `right ${rowStickers(read.right)}${read.rightPattern ? ` → ${BLOCK_READING[read.rightPattern]}` : ''}` +
+        `${signature}. ` +
         (read.candidates.length === 1
-          ? ` — only ${read.candidates[0].name}.`
-          : ` — leaves ${candidateWords(read.candidates)}${decider}.`),
+          ? `Read it before you turn: front ${rowStickers(read.front)}; right ${rowStickers(read.right)}.`
+          : `Separate them before you turn: ${decider}.`),
       highlight: lit,
     }
   } else {
@@ -1274,8 +1297,8 @@ export function buildTeachingBrief(
       : `edges ${movementClause(map, 'edge')}, so ${arrivalsInto(map, 'edge')}`
     step = {
       key: 'method',
-      heading: 'Look for',
-      text: `${cornerClause.charAt(0).toUpperCase()}${cornerClause.slice(1)}; ${edgeClause}.`,
+      heading: 'Learn the pattern',
+      text: `${signature}. Getting there: ${cornerClause}; ${edgeClause}.`,
       highlight: lit,
       arrows: true,
     }

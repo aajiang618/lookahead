@@ -18,9 +18,11 @@ npm run dev
 
 **Four tabs, icons, along the bottom on a phone.** Home shows Today — the whole
 plan, review included — with the cases being learned drawn as diagrams and a
-progress bar underneath. Train is the timed test, one tap and straight in:
-scramble and cube shown, clock running, multiple choice, scored, drawing on
-whatever the schedule has already put in front of you. Underneath, **Practise one case** drills a single OLL, every PLL it can
+progress bar underneath. **Train** is the timed test: the scramble alone on a
+full screen, tap when you are looking at the cube, then pick from **four**
+options. The clock starts on the tap, so setting the case up is never timed as
+recognition, and the three wrong answers are the cases that genuinely look like
+the right one. A menu on that screen chooses which cases it draws from. Underneath, **Practise one case** drills a single OLL, every PLL it can
 leave, multiple choice — deliberately **unscored**, because self-selected reps
 are exactly what breaks a spaced-repetition schedule. The scramble differs on
 every rep, so what you learn is the case, never the setup.

@@ -249,3 +249,11 @@
   width: 100%;
   accent-color: var(--caution);
 }
+
+/* Flagged by measurement: the settings selects were 36px on a touch screen. */
+@media (pointer: coarse) {
+  .log__setting select {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
+}

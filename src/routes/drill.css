@@ -558,3 +558,150 @@
     padding-bottom: calc(var(--gap-3) + env(safe-area-inset-bottom));
   }
 }
+
+/* --- The timed test's setup screen --------------------------------------- */
+
+/*
+ * The scramble alone, covering the drill, until the solver says they are
+ * looking at the cube. It sits over the stage rather than replacing it so the
+ * layout underneath never reflows when it goes — the cube is already the size
+ * it will be when it appears.
+ */
+.stage__setup {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: var(--ground);
+}
+
+.stage__setup-tap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-4);
+  padding: var(--gap-5);
+  text-align: center;
+}
+
+.stage__setup-picker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--gap-4);
+}
+
+.stage__setup-scramble {
+  max-width: 30rem;
+  font-size: clamp(1.125rem, 4.5vw, 1.75rem);
+  line-height: 1.5;
+  color: var(--ink-strong);
+  overflow-wrap: anywhere;
+}
+
+.stage__setup-go {
+  color: var(--ink-dim);
+}
+
+.stage__setup:hover .stage__setup-go {
+  color: var(--ink);
+}
+
+.stage {
+  position: relative;
+}
+
+/* --- Which cases the test draws from ------------------------------------- */
+
+.picker {
+  width: 100%;
+  max-width: 30rem;
+  margin-top: var(--gap-3);
+}
+
+.picker__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  cursor: pointer;
+  list-style: none;
+}
+
+.picker__summary::-webkit-details-marker {
+  display: none;
+}
+
+.picker__summary:hover {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.picker__body {
+  margin-top: var(--gap-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-2);
+}
+
+.picker__all button {
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-pill);
+  color: var(--ink-dim);
+}
+
+.picker__all button:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
+  gap: var(--gap-2);
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.picker__case {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0.4rem 0.2rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  opacity: 0.35;
+  transition:
+    opacity var(--capture),
+    background-color var(--capture);
+}
+
+.picker__case[data-on='true'] {
+  opacity: 1;
+  background: var(--surface-strong);
+}
+
+.picker__case b {
+  font-size: 0.6875rem;
+  color: var(--ink-dim);
+}
+
+@media (pointer: coarse) {
+  .picker__summary,
+  .picker__all button {
+    min-height: 2.75rem;
+  }
+
+  .picker__case {
+    min-height: 3rem;
+  }
+}

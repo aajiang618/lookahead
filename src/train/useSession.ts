@@ -364,6 +364,13 @@ export function useSession() {
             ? Object.values(current.items)
                 .filter((i) => !i.parked && i.phase !== 'locked')
                 .map((i) => i.id)
+                // An explicit selection wins, but never invents cases the
+                // schedule has not unlocked: you cannot test what you have not met.
+                .filter((id) =>
+                  current.settings.testCases.length === 0
+                    ? true
+                    : current.settings.testCases.includes(caseIdOf(id)),
+                )
             : kind === 'practice'
               ? [predictItemId(modeRef.current.kind === 'practice' ? modeRef.current.ollId : '')]
               : [...nextPool.building, ...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
@@ -581,6 +588,19 @@ export function useSession() {
   )
 
   /**
+   * Restart the clock for the trial already on screen.
+   *
+   * The timed test shows the scramble first and the cube only when the solver
+   * taps, so the moment the trial was built is not the moment recognition
+   * began. Without this the reading time would include however long they spent
+   * setting the case up on a real cube.
+   */
+  const beginLooking = useCallback(() => {
+    if (phaseRef.current !== 'presenting') return
+    shownAtRef.current = performance.now()
+  }, [])
+
+  /**
    * Take the next rung of the hint ladder.
    *
    * Refused while a case is still being introduced. Those reps already carry
@@ -644,6 +664,7 @@ export function useSession() {
     exercise,
     hintLevel,
     showHint,
+    beginLooking,
     feedback,
     stopReason,
     stats,

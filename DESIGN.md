@@ -130,11 +130,31 @@ diagrams, because a shape is recognised faster than a number, which is rather
 the point of this app. Under it, a progress bar: n of 57 automatic. The practice
 grid tiles carry each case's diagram as the icon, for the same reason.
 
-**The lesson is one sentence.** "Front UBR top, UR top, UFL front → no block;
-right UFL top, UF top, UFR top → no block — only Rb." What to look at, what it
-says, and the comparison that settles it when the rows do not, carried by
-semicolons rather than prose. The suite holds the method step above 40
-characters and the whole thing under 260.
+**The lesson is one sentence, and it leads with the thing to memorise.**
+"Front a 2-bar, right no block — Gb, sharing it with Ga, Gc or Gd. Separate them
+before you turn: UBL top vs UF top — same → …". The block pair and the case it
+means come first, because *that* is what you want left in your head in a month;
+the stickers you read it from come second, because they are only how you get
+there today.
+
+The pair is **not** unique — it leaves 2.6 cases on average — so the sentence
+never says "that pair is Gb" flatly. It names what else shares the pattern,
+drawn from the same joint corner/edge classification the rest of the app uses,
+and then hands over the comparison that separates them. A recognition rule that
+is false four times in ten is worse than none.
+
+**The timed test shows the scramble alone, full screen, until you tap.** The
+clock starts on the tap, not when the trial was built, because setting a case up
+on a real cube is not recognition and must not be timed as though it were. The
+panel is the tap target — you should not have to aim while holding a cube — and
+the case picker is layered on it, since "which cases am I being tested on" is a
+question you ask there and nowhere else.
+
+**Four options, not twenty-one.** Finding a name in a grid of twenty-one is a
+search, and search time contaminates a recognition measurement. The three wrong
+answers are drawn from the cases that genuinely look like the right one — same
+corner and edge classes first, then the same family — because a distractor you
+could rule out without looking at the cube makes the test easier than the skill.
 
 **Version 2 of the store resets learning state on load.** The lessons were
 rebuilt around the colour reading, and progress earned against the old ones

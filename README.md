@@ -80,9 +80,11 @@ Two findings make the reading work, both checked across all 1,197 drills:
   average**, four at the very worst. Each comparison is chosen by its *worst*
   branch, not its average: a rule is only as good as the reading that goes badly.
 
-That runs for the four introducing reps of a case and never again: **hints only
-exist after a case has been introduced**, because a hint on a rep that was never
-a test is a worse copy of the lesson you already had.
+The first time a case comes up it teaches; the rest of its introduction tests
+you with **four options**, and every answer carries the same sentence the lesson
+gave. Review works identically — one case, one explanation, one vocabulary.
+**Hints only exist after a case has been introduced**, because a hint on a rep
+that was never a test is a worse copy of the lesson you already had.
 
 **Back** (or `Esc`) leaves a session at any point and counts what you did.
 

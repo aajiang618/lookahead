@@ -156,10 +156,26 @@ answers are drawn from the cases that genuinely look like the right one — same
 corner and edge classes first, then the same family — because a distractor you
 could rule out without looking at the cube makes the test easier than the skill.
 
-**Version 2 of the store resets learning state on load.** The lessons were
-rebuilt around the colour reading, and progress earned against the old ones
-would grade the new material as already known. Settings — algorithm choices
-included — survive the reset.
+**Teach once, then test.** A case's introduction used to be four readings of the
+same sentence in a row, which is copying rather than learning. Only the first
+introducing rep teaches now; the rest test with four options, and every answer
+carries the same sentence the lesson gave. Review and the guided session work
+the same way, so meeting a case twice never means being told about it in two
+different vocabularies.
+
+**Four options is the answering surface everywhere** a rep is a test.
+Reveal-and-self-grade survives in settings for anyone who would rather say the
+answer out loud, but it cannot be the default: a session that teaches a case and
+then asks you to grade yourself on it never checks whether you knew it. The
+21-cell grid is gone.
+
+**Version 3 of the store resets learning state on load.** Twice now the lessons
+have changed enough that progress earned against the old ones would grade the
+new material as already known. Settings survive the reset — with one exception
+that has bitten twice: a **superseded default is not a preference**. `reveal`
+was the old default answering mode, so carrying it forward would have meant
+nobody ever saw the four options, exactly as the old cube zoom would have kept
+the cube framed tight.
 
 **The hidden attribute always wins** (`[hidden] { display: none !important }`).
 Its UA style is a plain `display: none`, which any authored `display: flex` on

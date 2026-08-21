@@ -26,21 +26,42 @@ case. Every rep the same OLL leaves a different PLL — that is the skill. Nothi
 is revealed until you commit: **Space** to reveal, then **J** if you had it or
 **F** if you missed, and it moves straight on. Two keys per rep.
 
-**The first time a case comes up, it teaches instead of testing.** You get the
-method out loud, in the order your eye takes it — corners, then edges, then what
-the two readings leave:
+**The first time a case comes up, it teaches instead of testing** — and what it
+teaches is two-sided recognition done from the OLL stage, in colours, because
+that is the recognition you actually perform:
 
-1. *"Read UBR, UFR and UFL — the corners that decide this case. It moves them:
-   UBR → UFL → UFR → UBR. So the slots you read fill from UFR, UFL and UBR."*
-2. *"Now UR and UF. It moves them: UB and UL swap; UR and UF swap. So the slots
-   you read fill from UR ← UF, UF ← UR."*
-3. On the reveal: *"It lands with two adjacent corners swapped and two adjacent
-   edges swapped — front shows headlights, right shows no block. That pair
-   leaves Rb, Ja, Jb or Ra, and this one is Rb."*
+1. **The front row.** *"Your front row will be back-right corner (top), right
+   edge (top) and front-left corner (front). They read all three different — no
+   block."*
+2. **The right row.** *"…front-left corner (top), front edge (top) and
+   front-right corner (top). All three different — no block. Both rows together
+   leave 5 of the 21."*
+3. **What decides it.** *"Compare front-left corner (top) with right edge
+   (right): same → F or V; opposite → E or Ra; neither → Rb or V. Here: same, so
+   F or V. Then back-left corner against back-right corner: same, so F."*
 
-Every clause is computed from your algorithm and the state in front of you; the
-two reading steps never name a PLL, which is checked for all 1,197 drills. That
-runs for the four introducing reps of a case and never again — **hints only
+A sticker keeps its colour through an algorithm — only its position changes — so
+the front and right rows you are going to read **already exist on the cube**, and
+for most cases most of them are already in sight. Where they are is computed
+backwards through the algorithm's own facelet permutation.
+
+Two findings make this work, both checked across all 1,197 drills:
+
+- **Colour relations alone always finish the job.** Relations between the
+  stickers you can identify — same, opposite, neither — determine the case for
+  **all 57 OLLs**. Relations rather than colours because an AUF changes every
+  absolute colour in the last layer and changes no relation between two of them,
+  so a rule written this way is AUF-proof by construction.
+- **The six stickers of the two-sided read settle it alone about a third of the
+  time** (426 of 1,197 drills), and the rest need **0.99 further comparisons on
+  average**, four at the very worst. Each comparison is chosen by its *worst*
+  branch, not its average: a rule is only as good as the reading that goes badly.
+
+**Corners and edges come last, and briefly.** Following pieces through the
+algorithm is the explanation behind the reading — *"behind it: no corner moves,
+they only twist, and UB → UR → UL → UB"* — not the reading itself.
+
+That runs for the four introducing reps of a case and never again: **hints only
 exist after a case has been introduced**, because a hint on a rep that was never
 a test is a worse copy of the lesson you already had.
 
@@ -210,10 +231,13 @@ Three suites and a typecheck:
   facelet permutation from the 3D renderer's own cubie geometry and checks it
   against the engine — if those disagreed, the cube on screen would turn the
   wrong way while the model stayed right.
-  It also checks the lesson every case gives itself: three steps in order, none
-  of them thin, the two reading steps never naming a PLL, the conclusion always
-  naming the case actually in front of you, and every lit sticker belonging to a
-  piece that decides the answer — across all 1,197 drills.
+  It also checks the lesson every case gives itself, across all 1,197 drills:
+  four steps in order, none of them thin, **no narrowing the lesson states out
+  loud ever ruling out the true case**, every branch set a genuine partition
+  holding the answer, every lit sticker legible from the front and right, and —
+  the strong claim — the colour comparisons always terminating on exactly one
+  case. A recognition rule that can talk you out of the right answer is worse
+  than no rule.
 - **`scripts/verify-curriculum.ts`** — the unlock order and coverage.
 - **`scripts/simulate-scheduler.ts`** — drives a synthetic solver through 90
   daily sessions and asserts the scheduler's properties: cases unlock gradually,

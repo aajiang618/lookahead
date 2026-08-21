@@ -156,22 +156,44 @@ column and a solver wants one at a time.
 
 ## A new case teaches before it tests
 
-The four introducing reps of a case carry the method on screen — corners, then
-edges, then the conclusion on the reveal — and the hint ladder is withheld until
-they are done. Two consequences in the layout:
+The four introducing reps of a case carry the method on screen, and the hint
+ladder is withheld until they are done.
+
+**What it teaches is the reading, not the mechanism.** Three steps — the front
+row, the right row, then the comparison that decides between what is left — all
+in colours, because two-sided recognition is what a solver actually performs.
+Corners and edges appear once, in a subordinate clause on the reveal. They were
+the lesson in the first version of this, and that taught the wrong skill: piece
+tracking is how you explain a reading, not how you make one.
+
+The claim underneath it is checked rather than asserted: relations between the
+legible stickers — same, opposite, neither — determine the case for all 57
+OLLs, so the colours always finish. Relations rather than absolute colours,
+because an AUF changes every colour in the last layer and no relation between
+two of them.
+
+Each comparison is chosen by minimising its **worst** branch rather than its
+average, since a rule is only as good as the reading that goes badly. Candidate
+sets are named up to four and counted past that — beyond four a list of case
+names stops being something you can hold, and "leaves 11 of the 21" is the more
+useful sentence anyway, because what it tells you is that the colours have not
+done their work yet.
+
+The conclusion reads the blocks off the **resolved state**, not off the case's
+canonical recognition summary. The summary describes a PLL at its own reference
+AUF; with a different AUF on the cube it is a different case's worth of words,
+and printing it under a reading that says otherwise made the lesson contradict
+itself.
+
+Two consequences in the layout:
 
 - The lesson steps forward in the same fixed box the hints use, so stepping from
-  corners to edges does not move the cube.
+  the front row to the right row does not move the cube.
 - A lesson strip is taller than an ask strip, so the whole rep reserves the
-  taller height, revealed half included. Measured at 375px, where the text wraps
-  furthest: 15.5rem on a laptop, 21rem on a phone. Without that the cube grows
-  the moment the answer appears — the one thing this layout exists to prevent.
-
-The words are computed, never written: `buildTeachingBrief` derives every clause
-from the piece map and the resolved state, and `verify-cases.ts` checks across
-all 1,197 drills that the two reading steps never name a PLL and the conclusion
-always names the case in front of you. A lesson that could drift from the cube
-it is describing would be worse than no lesson.
+  taller height, revealed half included. Sized to the longest lesson any of the
+  1,197 drills produces: 5.4rem on a laptop, 9rem at 375px. Without that the
+  cube grows the moment the answer appears — the one thing this layout exists to
+  prevent.
 
 ## On a phone
 

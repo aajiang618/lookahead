@@ -397,12 +397,12 @@
  * prevent. Measured at 375px, where the lesson wraps furthest.
  */
 .stage[data-teaching='true'] .stage__foot {
-  min-height: 15.5rem;
+  min-height: 16.7rem;
 }
 
 @media (max-width: 46rem) {
   .stage[data-teaching='true'] .stage__foot {
-    min-height: 21rem;
+    min-height: 23.8rem;
   }
 }
 
@@ -411,8 +411,14 @@
  * sized to take the room the aids row gives up, so the ask strip stays the
  * height it always was and the cube above never changes size.
  */
+/*
+ * Sized to the longest lesson any of the 1,197 drills produces — the deciding
+ * comparison, which spells out what each answer would mean before saying which
+ * one the cube actually shows. Fixed, so stepping through the lesson does not
+ * move the cube above it.
+ */
 .stage__hint-line--teach {
-  height: 4.2rem;
+  height: 5.4rem;
   color: var(--ink);
 }
 
@@ -430,7 +436,8 @@
 @media (max-width: 46rem) {
   /* Sized to the longest lesson any case produces, so none of them clips. */
   .stage__hint-line--teach {
-    height: 6.2rem;
+    /* 8.4rem fits the longest lesson exactly; this leaves it room to breathe. */
+    height: 9rem;
   }
 }
 

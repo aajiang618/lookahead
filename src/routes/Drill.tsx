@@ -50,7 +50,16 @@ export function Drill({ session }: { session: Session }) {
   const teaching = useMemo(
     () =>
       trial?.encoding
-        ? buildTeachingBrief(trial.oll, trial.drill.ollAlg, trial.resolved, trial.pll)
+        ? buildTeachingBrief(
+            trial.oll,
+            trial.drill.ollAlg,
+            // The state before the algorithm, not the head-start state: the
+            // lesson is about what you can read at the moment you are handed
+            // the case.
+            trial.drill.state,
+            trial.resolved,
+            trial.pll,
+          )
         : null,
     [trial],
   )

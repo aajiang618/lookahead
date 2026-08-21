@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Lookahead — train the seam between OLL and PLL. Predict the case before the algorithm finishes."
+    />
+    <title>Lookahead — OLL to PLL recognition</title>
+    <!--
+      Installed to a home screen, this runs with no browser chrome at all: the
+      status bar sits over the interface, so the layout pads itself out of the
+      way with env(safe-area-inset-*) rather than assuming a rectangle.
+    -->
+    <meta name="theme-color" content="#0b0e10" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Lookahead" />
+    <!-- Dates and case numbers are not phone numbers. -->
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230B0E10'/%3E%3Cg fill='none' stroke='%23E8E4D9' stroke-width='1.6'%3E%3Cpath d='M6 6h6v6H6z'/%3E%3Cpath d='M6 20h6v6H6z'/%3E%3Cpath d='M20 6h6v6h-6z'/%3E%3Cpath d='M20 20h6v6h-6z'/%3E%3C/g%3E%3Cpath d='M16 13v6M13 16h6' stroke='%23FFB020' stroke-width='1.6'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <!--
+      DIRECTION CONTRACT — Lookahead
+
+      THESIS: An instrument for reading ahead of the moment, not a flashcard app
+      wearing a dark theme. Refuses the category default of rounded cards on
+      slate with a neon accent.
+
+      OWN-WORLD: A head-up display. Warm ivory symbology on instrument charcoal,
+      drawn entirely in 1px stroke — corner registration marks and hairlines
+      instead of panels, one caution amber, no glow and no shadow. The cube is
+      the only saturated colour anywhere on screen.
+
+      STORY: You already know every algorithm. What costs you time is the pause
+      between finishing OLL and reading the PLL underneath it. Every rep is timed
+      to the hundredth; the tapes show whether that pause is shrinking.
+
+      FIRST VIEWPORT: Mode annunciator across the top. The cube centred inside a
+      reticle, flanked by a latency tape left and a repertoire tape right. The
+      21-case answer grid across the bottom, in fixed positions forever.
+
+      FORM: Head-up display, candidate 7 of the grounded list; seed 5f8332fa.
+
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the
+      finish review, the verdict, and DESIGN.md.
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

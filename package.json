@@ -1,0 +1,30 @@
+{
+  "name": "lookahead",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node --experimental-strip-types scripts/build-sw.ts",
+    "preview": "vite preview",
+    "verify": "node --experimental-strip-types scripts/verify-cases.ts && node --experimental-strip-types scripts/verify-curriculum.ts",
+    "simulate": "node --experimental-strip-types scripts/simulate-scheduler.ts",
+    "check": "npm run verify && npm run simulate && tsc --noEmit",
+    "icons": "node --experimental-strip-types scripts/make-icons.ts"
+  },
+  "dependencies": {
+    "framer-motion": "^11.11.17",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

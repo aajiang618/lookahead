@@ -1,0 +1,130 @@
+.shell__head {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--gap-5);
+  padding-left: var(--gap-5);
+  border-bottom: var(--hairline) solid var(--rule);
+  flex-wrap: wrap;
+}
+
+.shell__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  padding-block: var(--gap-2);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink-strong);
+}
+
+.wordmark b {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.shell__tagline {
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  padding-left: var(--gap-3);
+  border-left: var(--hairline) solid var(--rule);
+  color: var(--ink-dim);
+}
+
+.shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.shell__alert {
+  margin: 0;
+  padding: var(--gap-3) var(--gap-5);
+  border-bottom: var(--hairline) solid var(--warning-dim);
+  color: var(--warning);
+  text-transform: none;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  background: var(--caution);
+  color: var(--ground-deep);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: var(--gap-4);
+  top: var(--gap-3);
+}
+
+@media (max-width: 44rem) {
+  .shell__head {
+    padding-left: var(--gap-3);
+    gap: var(--gap-2);
+  }
+
+  .shell__tagline {
+    display: none;
+  }
+
+  /*
+   * One row, not two. A wrapped header costs about 32px, and on a phone that
+   * is 32px taken off the cube on every screen — the wordmark's glyph carries
+   * the identity by itself at this size.
+   */
+  .shell__head {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .wordmark b {
+    display: none;
+  }
+
+  .fma {
+    border-bottom: 0;
+  }
+
+  .fma__item {
+    padding-inline: 0.75rem;
+    text-align: center;
+  }
+}
+
+/*
+ * Standalone on a phone there is no browser chrome, so the notch and the home
+ * indicator are ours to avoid. Only the outer edges take the inset; the drill
+ * strips inside stay the height they were.
+ */
+.shell__head {
+  padding-top: env(safe-area-inset-top);
+  padding-left: max(var(--gap-5), env(safe-area-inset-left));
+  padding-right: env(safe-area-inset-right);
+}
+
+@media (max-width: 44rem) {
+  .shell__head {
+    padding-left: max(var(--gap-3), env(safe-area-inset-left));
+  }
+
+  /* Thumb-sized: the mode strip is the only navigation on a phone. */
+  .fma__item {
+    min-height: 2.75rem;
+  }
+}

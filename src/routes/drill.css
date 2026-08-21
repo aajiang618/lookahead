@@ -1,0 +1,487 @@
+/*
+ * The drill is one screen: a thin strip, the cube, a thin strip. The cube takes
+ * every pixel the two strips do not, and nothing is ever placed beside it.
+ */
+
+.stage {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* --- Top strip ----------------------------------------------------------- */
+
+.stage__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-4);
+  padding: var(--gap-3) var(--gap-5);
+  border-bottom: var(--hairline) solid var(--rule);
+}
+
+.stage__where {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-4);
+  min-width: 0;
+}
+
+.stage__where > .label {
+  font-size: 0.5rem;
+  white-space: nowrap;
+}
+
+.stage__reps {
+  font-style: normal;
+  margin-left: 0.4rem;
+  color: var(--caution);
+}
+
+.stage__case {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink-strong);
+  white-space: nowrap;
+}
+
+.stage__alg {
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stage__headstart {
+  font-style: normal;
+  font-family: var(--font-ui);
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--caution);
+}
+
+/* --- The cube ------------------------------------------------------------ */
+
+.stage__cube {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+}
+
+.stage__canvas {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.stage__canvas:active {
+  cursor: grabbing;
+}
+
+.stage__flag {
+  position: absolute;
+  top: var(--gap-3);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.5rem;
+  color: var(--caution);
+  pointer-events: none;
+}
+
+/* --- Bottom strip -------------------------------------------------------- */
+
+.stage__foot {
+  border-top: var(--hairline) solid var(--rule);
+  padding: var(--gap-3) var(--gap-5) var(--gap-4);
+  /*
+   * Tall enough for the taller of the two branches — the ask strip, which
+   * carries the scramble. Fixed rather than fitted so the cube above keeps
+   * exactly one size: a viewport that resizes on reveal makes the answer feel
+   * like it moved the world, and forces the renderer to re-fit mid-rep.
+   */
+  min-height: 10.5rem;
+  display: grid;
+  align-items: center;
+}
+
+.stage__ask {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-3);
+  grid-area: 1 / 1;
+}
+
+.stage__prompt {
+  font-size: 0.625rem;
+  color: var(--ink-dim);
+}
+
+.stage__scramble {
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  opacity: 0.75;
+  text-align: center;
+  max-width: 46rem;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.stage__hint-line {
+  position: relative;
+  /* Fixed box: taking a hint must not resize the cube above it. */
+  height: 2.7rem;
+  max-width: 46rem;
+  padding-left: var(--gap-4);
+  text-align: left;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--ink);
+  overflow: hidden;
+}
+
+.stage__hint-line[data-shown='true']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 8px;
+  height: var(--hairline);
+  background: var(--caution);
+}
+
+.stage__aids {
+  display: flex;
+  gap: var(--gap-2);
+  align-items: center;
+}
+
+.stage__answer {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-5);
+  flex-wrap: wrap;
+  max-width: var(--max-width);
+  width: 100%;
+  margin-inline: auto;
+}
+
+.stage__result {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-4);
+  min-width: 0;
+  flex: 1;
+}
+
+.stage__result-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stage__result-name {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+}
+
+.stage__verdict {
+  font-style: normal;
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--warning);
+}
+
+.stage__verdict[data-ok='true'] {
+  color: var(--ink-dim);
+}
+
+.stage__hint {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+
+.stage__hint--quiet {
+  opacity: 0.75;
+}
+
+.stage__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-2);
+  flex: none;
+}
+
+.stage__toggle {
+  padding: 0.55rem 0.8rem;
+  border: var(--hairline) solid var(--rule-strong);
+  color: var(--ink-dim);
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  font-weight: 600;
+  transition:
+    color var(--capture),
+    border-color var(--capture);
+}
+
+.stage__toggle[data-on='true'] {
+  color: var(--caution);
+  border-color: var(--caution);
+}
+
+.stage__toggle:hover {
+  color: var(--ink-strong);
+}
+
+/* In the ask strip the toggle is an aside, not a peer of the primary action. */
+.stage__toggle--quiet {
+  border-color: transparent;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.5rem;
+}
+
+.stage__toggle--quiet:hover {
+  border-color: var(--rule);
+}
+
+.action kbd,
+.stage__toggle kbd {
+  font: inherit;
+  font-size: 0.5625rem;
+  margin-left: 0.5rem;
+  padding: 1px 4px;
+  border: var(--hairline) solid currentcolor;
+  opacity: 0.6;
+}
+
+/* --- Standby ------------------------------------------------------------- */
+
+.standby {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-3);
+  text-align: center;
+  padding: var(--gap-7) var(--gap-5);
+}
+
+.standby__mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(2.6);
+  pointer-events: none;
+  opacity: 0.55;
+  z-index: -1;
+}
+
+.standby__title {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.standby__lede {
+  max-width: 32rem;
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.standby__figures {
+  display: flex;
+  gap: var(--gap-6);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: var(--gap-3) 0 0;
+  padding-top: var(--gap-4);
+  border-top: var(--hairline) solid var(--rule);
+}
+
+.standby__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.standby__figure dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+  line-height: 1.1;
+}
+
+.standby__note {
+  max-width: 32rem;
+  color: var(--ink-dim);
+  font-size: 0.8125rem;
+}
+
+.standby__go {
+  margin-top: var(--gap-4);
+}
+
+/* --- Narrow -------------------------------------------------------------- */
+
+@media (max-width: 46rem) {
+  .stage__head {
+    padding: var(--gap-2) var(--gap-3);
+    flex-wrap: wrap;
+    gap: var(--gap-2);
+  }
+
+  .stage__where {
+    gap: var(--gap-3);
+  }
+
+  .stage__case {
+    font-size: 0.9375rem;
+  }
+
+  .stage__alg {
+    font-size: 0.6875rem;
+    flex-basis: 100%;
+  }
+
+  .stage__foot {
+    padding: var(--gap-3);
+    min-height: 12rem;
+  }
+
+  .stage__answer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--gap-3);
+  }
+
+  .stage__controls > * {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* --- The lesson ---------------------------------------------------------- */
+
+/*
+ * A lesson strip is taller than an ask strip, so the whole rep reserves the
+ * taller height — including the revealed half. Otherwise the cube grows the
+ * moment the answer appears, which is the one thing this layout exists to
+ * prevent. Measured at 375px, where the lesson wraps furthest.
+ */
+.stage[data-teaching='true'] .stage__foot {
+  min-height: 15.5rem;
+}
+
+@media (max-width: 46rem) {
+  .stage[data-teaching='true'] .stage__foot {
+    min-height: 21rem;
+  }
+}
+
+/*
+ * A new case teaches before it tests. The box is fixed like the hint box and
+ * sized to take the room the aids row gives up, so the ask strip stays the
+ * height it always was and the cube above never changes size.
+ */
+.stage__hint-line--teach {
+  height: 4.2rem;
+  color: var(--ink);
+}
+
+.stage__teach-head {
+  display: block;
+  font-size: 0.5rem;
+  color: var(--caution);
+  margin-bottom: 0.25rem;
+}
+
+.stage__hint--teach {
+  color: var(--ink);
+}
+
+@media (max-width: 46rem) {
+  /* Sized to the longest lesson any case produces, so none of them clips. */
+  .stage__hint-line--teach {
+    height: 6.2rem;
+  }
+}
+
+/* --- On a phone ---------------------------------------------------------- */
+
+.stage__foot {
+  padding-bottom: calc(var(--gap-4) + env(safe-area-inset-bottom));
+  padding-left: max(var(--gap-5), env(safe-area-inset-left));
+  padding-right: max(var(--gap-5), env(safe-area-inset-right));
+}
+
+/*
+ * The cube takes the drag, not the page. Without this a slow rotate scrolls
+ * the document instead of turning the cube, which on a touch screen is the
+ * difference between the cube being an object and being a picture.
+ */
+.stage__canvas,
+.stage__canvas canvas {
+  touch-action: none;
+}
+
+@media (pointer: coarse) {
+  /* Every control you press during a rep is a real target. */
+  .stage__toggle,
+  .stage__toggle--quiet {
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    padding-inline: 0.9rem;
+  }
+
+  .stage__toggle--quiet {
+    font-size: 0.5625rem;
+  }
+
+  .stage__aids {
+    gap: var(--gap-3);
+  }
+
+  /* Keyboard legends mean nothing on a phone. */
+  .stage__toggle kbd,
+  .action kbd {
+    display: none;
+  }
+}
+
+@media (max-width: 46rem) {
+  /* The narrow strip keeps its tighter gutters; only the inset is honoured. */
+  .stage__foot {
+    padding-left: max(var(--gap-3), env(safe-area-inset-left));
+    padding-right: max(var(--gap-3), env(safe-area-inset-right));
+    padding-bottom: calc(var(--gap-3) + env(safe-area-inset-bottom));
+  }
+}

@@ -1,0 +1,94 @@
+/*
+ * Lookahead design tokens.
+ *
+ * The world is a head-up display, so the rules are stricter than usual:
+ *
+ *   - Structure is drawn in STROKE. There are no filled cards, no drop
+ *     shadows, no rounded panel chrome. Regions are bounded by 1px rules and
+ *     corner registration marks, the way symbology is bounded on a combiner.
+ *   - Symbology is MONOCHROME warm ivory with a single caution amber and a
+ *     rarely used warning red. A real HUD cannot show more, because it is one
+ *     projector behind one piece of glass.
+ *   - The CUBE is the only saturated colour on screen. That is the whole point:
+ *     everything the interface says is quiet, and the thing being read is loud.
+ *   - No glow, no bloom, no neon. Collimated symbology is crisp, not soft.
+ */
+
+:root {
+  /* Ground ------------------------------------------------------------ */
+  --ground: #0b0e10;
+  --ground-deep: #070909;
+  --ground-lift: #11161a;
+
+  /* Symbology --------------------------------------------------------- */
+  --ink: #e8e4d9;
+  --ink-strong: #fbf8f0;
+  /*
+   * Text tokens carry a measured contrast ratio against --ground:
+   *   --ink         15.9:1
+   *   --ink-dim      5.6:1  <- the floor for anything a person reads
+   * --ink-faint and --ink-ghost sit at 2.5:1 and below, so they are for
+   * STROKES ONLY: ticks, rules, dividers, decorative marks. Never text.
+   */
+  --ink-dim: rgb(232 228 217 / 58%);
+  --ink-faint: rgb(232 228 217 / 32%);
+  --ink-ghost: rgb(232 228 217 / 14%);
+
+  --rule: rgb(232 228 217 / 16%);
+  --rule-strong: rgb(232 228 217 / 34%);
+
+  /* Annunciation ------------------------------------------------------ */
+  --caution: #ffb020;
+  --caution-dim: rgb(255 176 32 / 40%);
+  --warning: #ff5c4d;
+  --warning-dim: rgb(255 92 77 / 38%);
+
+  /* Cube facelets — domain colours, the one place saturation lives ----- */
+  --face-u: #f2d024;
+  --face-d: #ececec;
+  --face-f: #16a75b;
+  --face-b: #1e6fd9;
+  --face-r: #d93526;
+  --face-l: #e8761b;
+  --face-blank: #1b2126;
+
+  /* Type -------------------------------------------------------------- */
+  --font-ui: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Spline Sans Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+
+  /* Instrument lettering: caps, tracked, small. */
+  --label-size: 0.6875rem;
+  --label-tracking: 0.14em;
+
+  /* Rhythm ------------------------------------------------------------ */
+  --gap-1: 0.25rem;
+  --gap-2: 0.5rem;
+  --gap-3: 0.75rem;
+  --gap-4: 1rem;
+  --gap-5: 1.5rem;
+  --gap-6: 2rem;
+  --gap-7: 3rem;
+
+  /* Motion — slew, capture, roll -------------------------------------- */
+  --slew: 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  --capture: 130ms cubic-bezier(0.2, 0, 0, 1);
+  --fade: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  --hairline: 1px;
+  --max-width: 82rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --slew: 1ms linear;
+    --capture: 1ms linear;
+    --fade: 1ms linear;
+  }
+}
+
+/* A solver who has asked for calm in settings gets the same treatment. */
+:root[data-reduce-motion='true'] {
+  --slew: 1ms linear;
+  --capture: 1ms linear;
+  --fade: 1ms linear;
+}

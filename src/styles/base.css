@@ -1,0 +1,205 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/*
+ * On a phone, installed to the home screen, this is the whole window. `dvh`
+ * rather than `vh` because in a browser tab iOS measures `vh` against the
+ * viewport with the toolbars hidden, which pushes the drill's bottom strip —
+ * the one with the button you press every rep — under the address bar.
+ */
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+body {
+  margin: 0;
+  /* No rubber-band bounce: installed, this is an app window, not a page. */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/*
+ * The canopy: a very slight vertical lift and a corner vignette, so the ground
+ * reads as glass with light behind it rather than as flat #000.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgb(38 52 60 / 55%) 0%, transparent 60%),
+    radial-gradient(100% 70% at 50% 100%, rgb(18 26 30 / 70%) 0%, transparent 55%);
+}
+
+/* Etch lines on the combiner. Barely there; visible on a large screen. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgb(232 228 217 / 2.2%) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+/* Instrument lettering. */
+.label {
+  font-size: var(--label-size);
+  letter-spacing: var(--label-tracking);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-dim);
+}
+
+.readout {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+/*
+ * Focus is a bracket, not a ring — the same visual language as everything else
+ * on the combiner.
+ */
+:focus-visible {
+  outline: var(--hairline) solid var(--caution);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * Registration marks. Four corner brackets standing in for a border, so a
+ * region reads as bounded without ever becoming a card.
+ */
+.registered {
+  position: relative;
+}
+
+.registered::before,
+.registered::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: var(--hairline) solid var(--rule-strong);
+  pointer-events: none;
+}
+
+.registered::before {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.registered::after {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+}
+
+::selection {
+  background: var(--caution);
+  color: var(--ground);
+}
+
+/* Scrollbars, kept in the same key as everything else. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--rule-strong);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}

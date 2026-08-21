@@ -279,8 +279,20 @@ data ever fails its own check.
 
 ## One subtlety worth knowing
 
-OLL 20, 21, 28 and 57 have rotationally symmetric shapes. The shape alone does
-not tell you which way round to apply the algorithm — and a different angle
-yields a **different PLL**. Drills are therefore always built with the OLL in
-canonical orientation, and visual variety comes from rotating the *camera*,
-which by construction cannot change the answer.
+**Fourteen** of the 57 OLL top shapes repeat under a whole-cube rotation — not
+the four usually named. The shape alone does not tell you which way round to
+apply the algorithm, and a different angle yields a **different PLL**. So every
+drill is built *and shown* in the orientation the algorithm is executed in, the
+reveal included.
+
+The camera used to rotate between reps for variety, on the argument that moving
+the camera cannot move the cube. True of the cube, false of the solver: shown
+one of those fourteen from a rotated angle you align to the shape, execute in a
+frame the drill never intended, and get a different PLL from the one being
+graded. Measured — with the camera straight, 0 of 1,197 drills disagree with
+themselves; read from a rotated camera, 3,528 of 4,788 do.
+
+**Algorithm choice is a recognition decision too.** Every published variant is
+scored on how much of the answer the two-sided read pins down on its own, and
+four cases use a variant other than the one listed first — OLL 11 and 56 go from
+2 of 21 to 13. The suite re-derives that list, so the choice cannot go stale.

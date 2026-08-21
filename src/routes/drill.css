@@ -28,6 +28,30 @@
   padding: var(--gap-4) var(--gap-5) var(--gap-3);
 }
 
+.stage__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  margin-right: var(--gap-2);
+  border-radius: var(--radius-pill);
+  color: var(--ink-dim);
+  transition:
+    color var(--capture),
+    background-color var(--capture);
+}
+
+.stage__back:hover {
+  background: var(--surface);
+  color: var(--ink-strong);
+}
+
+@media (pointer: coarse) {
+  .stage__back {
+    min-height: 2.75rem;
+  }
+}
+
 .stage__where {
   display: flex;
   align-items: baseline;
@@ -110,7 +134,13 @@
    * exactly one size: a viewport that resizes on reveal makes the answer feel
    * like it moved the world, and forces the renderer to re-fit mid-rep.
    */
-  min-height: 10.5rem;
+  /*
+   * Tall enough for the ask branch, which is the taller of the two: it carries
+   * the scramble, the hint line and the aids row. Measured at 223px on a
+   * laptop after the type got plainer — the old 10.5rem quietly stopped
+   * covering it, and the cube grew 55px every time an answer appeared.
+   */
+  min-height: 14.5rem;
   display: grid;
   /* Same reason as the stage: an auto column adopts its content's width. */
   grid-template-columns: minmax(0, 1fr);
@@ -377,7 +407,7 @@
 
   .stage__foot {
     padding: var(--gap-3);
-    min-height: 12rem;
+    min-height: 16.5rem;
   }
 
   .stage__answer {
@@ -422,12 +452,12 @@
  * prevent. Measured at 375px, where the lesson wraps furthest.
  */
 .stage[data-teaching='true'] .stage__foot {
-  min-height: 16.7rem;
+  min-height: 15.3rem;
 }
 
 @media (max-width: 46rem) {
   .stage[data-teaching='true'] .stage__foot {
-    min-height: 23.8rem;
+    min-height: 21.2rem;
   }
 }
 
@@ -437,13 +467,12 @@
  * height it always was and the cube above never changes size.
  */
 /*
- * Sized to the longest lesson any of the 1,197 drills produces — the deciding
- * comparison, which spells out what each answer would mean before saying which
- * one the cube actually shows. Fixed, so stepping through the lesson does not
- * move the cube above it.
+ * Sized to the longest lesson any of the 1,197 drills produces — 205 characters,
+ * checked by the suite, which is why the cap is a test and not a hope. Fixed,
+ * so revealing the answer does not move the cube above it.
  */
 .stage__hint-line--teach {
-  height: 5.4rem;
+  height: 4rem;
   color: var(--ink);
 }
 
@@ -461,8 +490,7 @@
 @media (max-width: 46rem) {
   /* Sized to the longest lesson any case produces, so none of them clips. */
   .stage__hint-line--teach {
-    /* 8.4rem fits the longest lesson exactly; this leaves it room to breathe. */
-    height: 9rem;
+    height: 6.4rem;
   }
 }
 

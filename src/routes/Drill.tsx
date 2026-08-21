@@ -126,6 +126,11 @@ export function Drill({ session }: { session: Session }) {
         toggleArrows()
         return
       }
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        session.end()
+        return
+      }
       if (event.key === 'h') {
         if (!trial?.encoding) session.showHint()
         return
@@ -157,6 +162,14 @@ export function Drill({ session }: { session: Session }) {
   return (
     <div className="stage" data-phase={phase} data-teaching={Boolean(teaching)}>
       <header className="stage__head">
+        <button
+          type="button"
+          className="stage__back label"
+          onClick={session.end}
+          title="Leave this session (Esc)"
+        >
+          <span aria-hidden="true">←</span> Back
+        </button>
         <div className="stage__where">
           <h1 className="stage__case">{trial.oll.name}</h1>
           {/*
@@ -209,7 +222,9 @@ export function Drill({ session }: { session: Session }) {
           >
             <p className="stage__prompt label">
               {teaching
-                ? `New case · ${teachStep + 1} of ${askSteps}`
+                ? askSteps > 1
+                  ? `New case · ${teachStep + 1} of ${askSteps}`
+                  : 'New case'
                 : settings.answerMode === 'reveal'
                   ? 'Which PLL does this leave?'
                   : 'Pick the case, or type its name'}

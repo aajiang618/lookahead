@@ -67,8 +67,12 @@
   --face-b: #1b64c4;
   --face-r: #cc2f21;
   --face-l: #e06c12;
-  /* An unoriented sticker. Dark on purpose: the OLL shape has to read. */
-  --face-blank: #1e2429;
+  /*
+   * An unoriented sticker: grey, the way every algorithm sheet has drawn it.
+   * It was near-black, which on a white page turned a dot case into eight black
+   * squares — the cube looked switched off rather than unsolved.
+   */
+  --face-blank: #b9bfc5;
 
   /* Type -------------------------------------------------------------- */
   --font-ui: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;

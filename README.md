@@ -31,26 +31,32 @@ case. Every rep the same OLL leaves a different PLL — that is the skill. Nothi
 is revealed until you commit: **Space** to reveal, then **J** if you had it or
 **F** if you missed, and it moves straight on. Two keys per rep.
 
-**The first time a case comes up, it teaches instead of testing** — and what it
-teaches is two-sided recognition done from the OLL stage, in colours, because
-that is the recognition you actually perform:
+**The first time a case comes up, it teaches instead of testing** — in **one
+step**, and by whichever route that particular case actually rewards:
 
-1. **The front row.** *"Your front row will be back-right corner (top), right
-   edge (top) and front-left corner (front). They read all three different — no
-   block."*
-2. **The right row.** *"…front-left corner (top), front edge (top) and
-   front-right corner (top). All three different — no block. Both rows together
-   leave 5 of the 21."*
-3. **What decides it.** *"Compare front-left corner (top) with right edge
-   (right): same → F or V; opposite → E or Ra; neither → Rb or V. Here: same, so
-   F or V. Then back-left corner against back-right corner: same, so F."*
+> **Read the two rows** — Front row: UBR top, UR top, UFL front → no block.
+> Right row: UFL top, UF top, UFR top → no block. That alone is Rb.
+
+> **Follow the pieces** — Corners never move here, only twist: the three you can
+> read now (UBR, UFR, UFL) are the three you get. Edges: UB → UR → UL → UB, so
+> UR ← UB, UF stays.
 
 A sticker keeps its colour through an algorithm — only its position changes — so
-the front and right rows you are going to read **already exist on the cube**, and
-for most cases most of them are already in sight. Where they are is computed
+the front and right rows you are going to read **already exist on the cube**,
+and for most cases most of them are already in sight. Where they are is computed
 backwards through the algorithm's own facelet permutation.
 
-Two findings make this work, both checked across all 1,197 drills:
+**Which of the two is better is a property of the case, so it is measured.**
+Both routes are costed in the same currency — things you must do beyond looking.
+Reading costs an inference per read sticker still hidden under the top colour
+plus the comparisons the colours still need; following pieces costs a mapping
+per deciding piece the algorithm actually moves. Ties go to reading, the faster
+skill. That splits the deck **42 read, 15 followed** — the fifteen being cases
+where half the six stickers are hidden, or where the algorithm freezes a whole
+system (twelve of the 57 never move a corner, five never move an edge) and
+*"what you can see now is what you get"* beats any colour comparison.
+
+Two findings make the reading work, both checked across all 1,197 drills:
 
 - **Colour relations alone always finish the job.** Relations between the
   stickers you can identify — same, opposite, neither — determine the case for
@@ -62,13 +68,11 @@ Two findings make this work, both checked across all 1,197 drills:
   average**, four at the very worst. Each comparison is chosen by its *worst*
   branch, not its average: a rule is only as good as the reading that goes badly.
 
-**Corners and edges come last, and briefly.** Following pieces through the
-algorithm is the explanation behind the reading — *"behind it: no corner moves,
-they only twist, and UB → UR → UL → UB"* — not the reading itself.
-
 That runs for the four introducing reps of a case and never again: **hints only
 exist after a case has been introduced**, because a hint on a rep that was never
 a test is a worse copy of the lesson you already had.
+
+**Back** (or `Esc`) leaves a session at any point and counts what you did.
 
 **A** toggles arrows over the cube showing where the pieces travel. Off by
 default so an unaided rep is the norm; they show the *algorithm's* fixed

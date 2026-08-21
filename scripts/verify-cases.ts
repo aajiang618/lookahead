@@ -559,25 +559,26 @@ console.log('\nHints: a ladder that gives away strictly more at each rung')
   )
 }
 
-console.log('\nThe lesson: two-sided recognition read from the OLL stage')
+console.log('\nThe lesson: one step, by whichever route the case rewards')
 {
-  const { buildTeachingBrief, readTwoSided, decidingComparisons, TWO_SIDED_FACELETS } =
+  const { buildTeachingBrief, readTwoSided, decidingComparisons, recognitionMethod, TWO_SIDED_FACELETS } =
     await import('../src/cube/recognition.ts')
   const { buildDrill } = await import('../src/cube/scramble.ts')
 
   let wrongShape = 0
   let thin = 0
+  let tooLong = 0
   let readingLies = 0
   let comparisonLies = 0
   let unterminated = 0
   let badBranches = 0
   let badHighlight = 0
   let missesAnswer = 0
-  let colourOnly = 0
-  let extraComparisons = 0
   let drills = 0
+  const byMethod = { pattern: 0, swaps: 0 }
 
   for (const oll of OLL_CASES) {
+    byMethod[recognitionMethod(oll, oll.alg).method]++
     for (const pll of PLL_CASES) {
       const drill = buildDrill(oll, pll, 5)
       const read = readTwoSided(oll, drill.ollAlg, drill.state)
@@ -585,52 +586,42 @@ console.log('\nThe lesson: two-sided recognition read from the OLL stage')
       const steps = buildTeachingBrief(oll, drill.ollAlg, drill.state, drill.stateAfterOLL, pll)
       drills++
 
-      if (steps.length !== 4) wrongShape++
-      if (steps.map((s) => s.key).join() !== 'front,right,deciding,result') wrongShape++
+      // One step of method, then the answer. Not three.
+      if (steps.length !== 2) wrongShape++
+      if (steps.map((s) => s.key).join() !== 'method,result') wrongShape++
       if (steps.some((s) => !s.text || s.text.length < 40)) thin++
+      // The strip is a fixed height and the lesson has to live inside it.
+      if (steps[0].text.length > 260) tooLong++
 
-      // Every narrowing the lesson states out loud has to still contain the
-      // true answer. A recognition rule that can talk you out of the right case
-      // is worse than no rule.
+      // Every narrowing the lesson states out loud must still hold the answer.
       if (!read.candidates.some((c) => c.id === pll.id)) readingLies++
-      if (read.candidates.length === 1) colourOnly++
       for (const step of chain) {
         if (!step.remaining.some((c) => c.id === pll.id)) comparisonLies++
-        // The branches must be a genuine partition: the answer sits in exactly
-        // the branch the cube actually reads as.
-        const inActual = step.branches.filter((b) => b.relation === step.actual)
-        if (inActual.length !== 1) badBranches++
-        if (!inActual[0]?.candidates.some((c) => c.id === pll.id)) badBranches++
+        const actual = step.branches.filter((b) => b.relation === step.actual)
+        if (actual.length !== 1) badBranches++
+        if (!actual[0]?.candidates.some((c) => c.id === pll.id)) badBranches++
       }
-      extraComparisons += chain.length
 
-      // The strong claim: colour relations alone always finish the job.
       const settled = chain.length === 0 ? read.candidates : chain[chain.length - 1].remaining
       if (settled.length !== 1 || settled[0].id !== pll.id) unterminated++
 
-      // Everything lit is a sticker that is genuinely legible right now.
       const lit = steps.flatMap((s) => s.highlight ?? [])
       if (lit.some((f) => !TWO_SIDED_FACELETS.has(f) || oll.state[f] === 'U')) badHighlight++
-
-      if (!new RegExp(`\\b${pll.name}\\b`).test(steps[3].text)) missesAnswer++
+      if (!new RegExp(`\\b${pll.name}\\b`).test(steps[1].text)) missesAnswer++
     }
   }
 
-  check('every case teaches in four steps: front, right, deciding, result', wrongShape === 0, `${wrongShape} did not`)
+  check('the lesson is one step of method plus the answer', wrongShape === 0, `${wrongShape} were not`)
   check('every step says something substantial', thin === 0, `${thin} too thin`)
+  check('no lesson outgrows the strip it has to fit', tooLong === 0, `${tooLong} too long`)
   check('the two-sided read never rules out the true case', readingLies === 0, `${readingLies} did`)
   check('no comparison ever rules out the true case', comparisonLies === 0, `${comparisonLies} did`)
   check('every branch set is a partition holding the answer', badBranches === 0, `${badBranches} bad`)
-  check(
-    'colour relations alone always finish the job',
-    unterminated === 0,
-    `${unterminated} of ${drills} left undecided`,
-  )
+  check('colour relations alone always finish the job', unterminated === 0, `${unterminated} of ${drills} undecided`)
   check('everything the lesson lights is legible from the front and right', badHighlight === 0, `${badHighlight} bad`)
   check('the conclusion names the case in front of you', missesAnswer === 0, `${missesAnswer} missed`)
   console.log(
-    `       (the six read stickers settle it alone in ${colourOnly} of ${drills} drills; ` +
-      `${(extraComparisons / drills).toFixed(2)} further comparisons on average)`,
+    `       (taught by reading the rows: ${byMethod.pattern} cases; by following the pieces: ${byMethod.swaps})`,
   )
 }
 

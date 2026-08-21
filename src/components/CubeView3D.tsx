@@ -24,8 +24,8 @@ const FACE_COLORS: Record<string, number> = {
   B: 0x1e6fd9,
   R: 0xd93526,
   L: 0xe8761b,
-  // A facelet the drill deliberately hides.
-  '?': 0x1b2126,
+  // A facelet the drill deliberately hides. Grey, not black: unknown, not off.
+  '?': 0xb9bfc5,
 }
 
 const BODY_COLOR = 0x0a0d0f

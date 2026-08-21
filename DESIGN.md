@@ -165,6 +165,90 @@ reliably catches.
 They show the *algorithm's* fixed permutation rather than the answer, which is
 what makes leaving them on training wheels rather than cheating.
 
+## A new case teaches before it tests
+
+The four introducing reps of a case carry the method on screen, and the hint
+ladder is withheld until they are done.
+
+**One step, not three.** The lesson used to walk the front row, the right row
+and the deciding comparison in sequence — three presses and three things to hold
+before the cube was ever answered. What survives is the shortest true statement
+of the method, with the conclusion kept back for the reveal. The suite enforces
+it: two steps, method then answer, and no lesson longer than 260 characters,
+because the strip it lives in is a fixed height.
+
+**Which method depends on the case, and is measured rather than chosen.**
+`recognitionMethod` costs both routes in the same currency — things you must do
+beyond looking:
+
+- **Reading the rows** costs one inference per read sticker still under the top
+  colour, plus the comparisons the colours still need afterwards, averaged over
+  every reading the case can present.
+- **Following the pieces** costs one mapping per deciding piece the algorithm
+  actually moves, plus the same inference for any you cannot identify yet.
+
+A tie goes to reading, which is the faster skill and the one worth building.
+That splits the deck **42 cases read, 15 followed**. The fifteen are the ones
+where reading is genuinely worse: either three of the six read stickers are
+still hidden, or the algorithm freezes a whole system — twelve of the 57 never
+move a corner, five never move an edge — and *"the corners you can read now are
+the corners you get"* beats any colour comparison.
+
+The average is taken over distinct readings rather than over the 84 outcome
+states. Same number, a tenth of the work, which matters because it runs on a
+phone the first time a case appears.
+
+## The strips are reserved, and the reservation is measured
+
+The cube must not change size when the answer appears, so the bottom strip
+reserves the height of its **taller** branch — the ask, which carries the
+scramble, the hint line and the aids row. Those numbers are measured in a
+browser rather than estimated: 223px on a laptop and 258px at 375px wide for an
+ordinary rep, more for a rep carrying a lesson.
+
+This broke once and is worth remembering. Making the type plainer grew the ask
+strip past a reservation that had been right for months, and the cube began
+growing 55px on every reveal. It survived a verification pass because the rep
+being measured happened to be a *teaching* rep, which reserves its own larger
+height — the check confirmed the case that was fine and never exercised the one
+that wasn't.
+
+## A way out
+
+The drill has a **Back** control in its top strip, and `Esc` does the same. It
+ends the session and returns to standby with whatever was done counted. Until
+it existed the only exits from a started session were to finish it or reload the
+page, which is not a thing an app installed on a phone should make you do.
+
+## On a phone
+
+Installed to a home screen there is no browser chrome, so the app owns the whole
+window and the safe-area insets are its problem, not Safari's. Three rules:
+
+- **Insets go on the outer edges only** — the shell header and the drill's
+  bottom strip — so the strips keep the height they were designed at.
+- **`100dvh`, not `100vh`.** In a browser tab iOS measures `vh` against the
+  viewport with toolbars hidden, which pushes the button you press every rep
+  under the address bar.
+- **The cube takes the drag** (`touch-action: none`). Without it a slow rotate
+  scrolls the document instead of turning the cube, which is the difference
+  between the cube being an object and being a picture.
+
+At `pointer: coarse` every control pressed during a rep becomes a thumb-height
+target and the keyboard legends disappear, since they mean nothing there.
+
+The home-screen icon is generated, not drawn (`npm run icons`): the mark is four
+corner brackets and a cross, pure axis-aligned stroke, so it rasterises exactly
+from filled rectangles in the app's own three colours.
+
+Offline is cache-first, which is right here for a reason particular to this app:
+everything it knows is computed on the device from two JSON files, and progress
+lives in localStorage. There is no server state to be stale about.
+
+**An unoriented sticker is grey**, the way every algorithm sheet has drawn it.
+It was near-black, which on a white page turned a dot case into eight black
+squares — the cube looked switched off rather than unsolved.
+
 ## Hints hold the layout still
 
 Only the newest rung renders, in a box of fixed height. Stacking all three grew

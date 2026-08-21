@@ -708,6 +708,15 @@ export function relateColours(a: string, b: string): ColourRelation {
   return 'neither'
 }
 
+/** The slot a facelet belongs to, in notation: `UBR`, `UF`. */
+function slotNameOf(facelet: number): string {
+  const corner = CORNER_SLOT_FACELETS.findIndex((list) => list.includes(facelet))
+  if (corner !== -1) return CORNER_SLOTS[corner]
+  const edge = EDGE_SLOT_FACELETS.findIndex((list) => list.includes(facelet))
+  if (edge !== -1) return EDGE_SLOTS[edge]
+  return '?'
+}
+
 /** Which piece a facelet belongs to, said the way a cuber says it. */
 function pieceNameOf(facelet: number): string {
   const corner = CORNER_SLOT_FACELETS.findIndex((list) => list.includes(facelet))
@@ -794,8 +803,8 @@ function readStickersFor(oll: OLLCase, alg: string, state: Facelets): ReadSticke
         // that must not grow. "back-right corner (top)" points at exactly one
         // sticker and costs a third of the words a sentence would.
         where: visible
-          ? `${pieceNameOf(from)} (${FACE_WORD[faceOf(from)]})`
-          : `${pieceNameOf(from)} (hidden)`,
+          ? `${slotNameOf(from)} ${FACE_WORD[faceOf(from)]}`
+          : `${slotNameOf(from)} (hidden)`,
         colour: null as string | null,
       }
     })
@@ -915,9 +924,9 @@ export interface Comparison {
   remaining: PLLCase[]
 }
 
-/** "the top of the back-right corner", compact enough to read three at a time. */
+/** `UBR top` — compact enough to read three at a time. */
 function stickerName(facelet: number): string {
-  return `${pieceNameOf(facelet)} (${FACE_WORD[faceOf(facelet)]})`
+  return `${slotNameOf(facelet)} ${FACE_WORD[faceOf(facelet)]}`
 }
 
 /**
@@ -992,8 +1001,112 @@ export function decidingComparisons(oll: OLLCase, alg: string, state: Facelets):
   return out
 }
 
+// ---------------------------------------------------------------------------
+// Which way to read this case
+// ---------------------------------------------------------------------------
+
+/**
+ * The two ways to know what an OLL will leave.
+ *
+ *  - `pattern`: read the stickers that are about to become the front and right
+ *    rows and name the block they will make. The fast skill, and the one real
+ *    two-sided recognition is built on.
+ *  - `swaps`: track the pieces the algorithm moves. Slower to perform, but when
+ *    an algorithm leaves a whole system alone — twelve of the 57 never move a
+ *    corner, five never move an edge — it collapses half the problem to
+ *    nothing: what you can see now is what you will be left with.
+ *
+ * Which is better is a property of the case, not a preference, so it is
+ * measured rather than chosen.
+ */
+export type RecognitionMethod = 'pattern' | 'swaps'
+
+export interface MethodChoice {
+  method: RecognitionMethod
+  /** Read stickers still under the top colour, which must be inferred. */
+  hiddenReadStickers: number
+  /** Comparisons the colours need beyond the two rows, averaged over outcomes. */
+  meanComparisons: number
+  /** Of the five pieces that decide it, how many the algorithm moves. */
+  movedPieces: number
+  /** Of the five, how many show no colour from the front and right. */
+  hiddenPieces: number
+  patternCost: number
+  swapCost: number
+}
+
+const methodCache = new Map<string, MethodChoice>()
+
+/**
+ * Cost both routes in the same currency — things you must do beyond looking —
+ * and take the cheaper.
+ *
+ * Reading costs one inference per read sticker still hidden under the top
+ * colour, plus whatever comparisons the colours still need afterwards.
+ * Tracking costs one mapping per deciding piece the algorithm actually moves,
+ * plus the same inference for any of those you cannot identify yet. A tie goes
+ * to reading, which is the faster skill and the one worth building.
+ */
+export function recognitionMethod(oll: OLLCase, alg: string): MethodChoice {
+  const key = `${oll.id}|${alg}`
+  const cached = methodCache.get(key)
+  if (cached) return cached
+
+  const shape = readStickersFor(oll, alg, oll.state)
+  const hiddenReadStickers = shape.filter((s) => !s.visible).length
+
+  /*
+   * Averaged over buckets rather than over the 84 outcome states: every state
+   * with the same reading needs the same comparisons by construction, and there
+   * are far fewer distinct readings than states. Same number, a tenth of the
+   * work, which matters because this runs on a phone the first time a case
+   * comes up.
+   */
+  const index = signatureIndex(oll, alg)
+  const states = outcomeStates(alg)
+  const representative = new Map<string, Facelets>()
+  const weight = new Map<string, number>()
+  for (const { state } of states) {
+    const signature = relationSignature(shape, state)
+    if (!representative.has(signature)) representative.set(signature, state)
+    weight.set(signature, (weight.get(signature) ?? 0) + 1)
+  }
+  let comparisonTotal = 0
+  for (const [signature, state] of representative) {
+    comparisonTotal += decidingComparisons(oll, alg, state).length * (weight.get(signature) ?? 0)
+  }
+  const meanComparisons = comparisonTotal / states.length
+  void index
+
+  const map = pieceMapOf(alg)
+  const brief = buildRecognitionBrief(oll, alg)
+  const needed = necessaryPieces(oll, alg)
+  const neededSlots = needed.map((p) =>
+    brief.slots.find((s) => s.kind === p.kind && s.slot === p.slot),
+  )
+  const movedPieces = needed.filter((p) =>
+    p.kind === 'corner' ? map.corners[p.slot] !== p.slot : map.edges[p.slot] !== p.slot,
+  ).length
+  const hiddenPieces = neededSlots.filter((s) => s?.hidden).length
+
+  const patternCost = hiddenReadStickers + meanComparisons
+  const swapCost = movedPieces + hiddenPieces
+
+  const choice: MethodChoice = {
+    method: patternCost <= swapCost ? 'pattern' : 'swaps',
+    hiddenReadStickers,
+    meanComparisons,
+    movedPieces,
+    hiddenPieces,
+    patternCost,
+    swapCost,
+  }
+  methodCache.set(key, choice)
+  return choice
+}
+
 export interface TeachingStep {
-  key: 'front' | 'right' | 'deciding' | 'result'
+  key: 'method' | 'result'
   heading: string
   text: string
   /** Facelets to light while this step is on screen. */
@@ -1019,33 +1132,53 @@ function movementClause(map: PieceMap, kind: 'corner' | 'edge'): string {
     .join('; ')
 }
 
-/** "a, b and c" — the plain English join. */
-function andList(items: string[]): string {
-  if (items.length <= 1) return items[0] ?? ''
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+/**
+ * `UFR ← UFL, UBR ← UFR, UFL stays` — what arrives in each slot you are going
+ * to read.
+ *
+ * Every two-sided slot is named, including the ones nothing travels into. A
+ * list that silently omits a slot reads as an oversight at exactly the moment
+ * the solver is checking whether they have accounted for everything.
+ */
+function arrivalsInto(map: PieceMap, kind: 'corner' | 'edge'): string {
+  const labels = kind === 'corner' ? CORNER_SLOTS : EDGE_SLOTS
+  const perm = kind === 'corner' ? map.corners : map.edges
+  const targets = kind === 'corner' ? TWO_SIDED_CORNER_SLOTS : TWO_SIDED_EDGE_SLOTS
+  return targets
+    .map((target) => {
+      const from = perm.findIndex((to) => to === target)
+      return from === target ? `${labels[target]} stays` : `${labels[target]} ← ${labels[from]}`
+    })
+    .join(', ')
 }
 
 /**
- * What three stickers look like, said the way a cuber says it.
+ * What the two faces actually show once the algorithm has run.
  *
- * The block name alone ("headlights") is what you want in your head after a
- * week; the colour relation ("outer two the same, middle different") is what
- * you need in order to find it the first time. Both, once, together.
+ * Computed from the resolved state rather than taken from the case's canonical
+ * recognition summary, which describes the PLL at its own reference AUF. With a
+ * different AUF on the cube the canonical description is a different case's
+ * worth of words, and printing it under a reading that says otherwise makes the
+ * lesson contradict itself.
  */
+function landedBlocks(resolved: Facelets): {
+  front: BlockPattern | null
+  right: BlockPattern | null
+} {
+  return {
+    front: blockOf([resolved[18], resolved[19], resolved[20]]),
+    right: blockOf([resolved[9], resolved[10], resolved[11]]),
+  }
+}
+
+/** What three stickers look like, said the way a cuber says it. */
 const BLOCK_READING: Record<BlockPattern, string> = {
-  bar: 'all three the same colour — a solid bar',
-  headlights: 'the outer two the same, the middle one different — headlights',
-  'outer-pair': 'one neighbouring pair the same, the third different — a 2-bar',
-  checker: 'all three different — no block',
+  bar: 'a solid bar',
+  headlights: 'headlights',
+  'outer-pair': 'a 2-bar',
+  checker: 'no block',
 }
 
-const RELATION_WORD: Record<ColourRelation, string> = {
-  same: 'the same colour',
-  opposite: 'opposite colours',
-  neither: 'neither same nor opposite',
-}
-
-/** The same three answers, short enough to list all of them in one breath. */
 const RELATION_SHORT: Record<ColourRelation, string> = {
   same: 'same',
   opposite: 'opposite',
@@ -1057,78 +1190,33 @@ const RELATION_SHORT: Record<ColourRelation, string> = {
  *
  * Past about four, a list of case names stops being a thing you can hold and
  * starts being a wall — and "leaves 11 of the 21" is the more useful sentence
- * anyway, because what it tells you is that the colours have not done the job
- * yet.
+ * anyway, because what it tells you is that the colours have not done the job.
  */
 function candidateWords(candidates: PLLCase[], limit = 4): string {
-  // Four is where a named list stops being something you can hold in one look.
   const names = candidates.map((c) => c.name)
   if (names.length === 1) return `${names[0]}`
   if (names.length <= limit) return listOf(names)
   return `${names.length} of the 21`
 }
 
-/**
- * What the two faces actually show once the algorithm has run.
- *
- * Computed from the resolved state rather than taken from the case's canonical
- * recognition summary, which describes the PLL at its own reference AUF. With
- * a different AUF on the cube the canonical description is simply a different
- * case's worth of words, and printing it under a reading that says otherwise
- * makes the lesson contradict itself.
- */
-function landedBlocks(resolved: Facelets): { front: BlockPattern | null; right: BlockPattern | null } {
-  return {
-    front: blockOf([resolved[18], resolved[19], resolved[20]]),
-    right: blockOf([resolved[9], resolved[10], resolved[11]]),
-  }
-}
-
-/** One face of the two-sided read, as a step of the lesson. */
-function faceStep(
-  face: 'front' | 'right',
-  stickers: ReadSticker[],
-  pattern: BlockPattern | null,
-  tail: string,
-): TeachingStep {
-  const legible = stickers.filter((s) => s.visible)
-  const lit = legible.map((s) => s.from as number)
-  const source = `Your ${face} row will be ${andList(stickers.map((s) => s.where))}.`
-
-  let reading: string
-  if (pattern) {
-    reading = `They read ${BLOCK_READING[pattern]}.`
-  } else if (legible.length === 2) {
-    reading = `The two you can read are ${RELATION_WORD[relateColours(legible[0].colour as string, legible[1].colour as string)]}; the third is still under the top.`
-  } else if (legible.length === 1) {
-    reading = 'Only one of the three is out from under the top colour yet.'
-  } else {
-    reading = 'None of the three is out from under the top colour yet.'
-  }
-
-  return {
-    key: face,
-    heading: face === 'front' ? 'The front row' : 'The right row',
-    text: `${source} ${reading}${tail ? ` ${tail}` : ''}`,
-    highlight: lit,
-  }
+/** The three stickers of one row, named compactly: `UBR top, UR top, UFL front`. */
+function rowStickers(stickers: ReadSticker[]): string {
+  return stickers.map((s) => s.where).join(', ')
 }
 
 /**
- * How to read this case, said out loud, once.
+ * How to read this case, said out loud, once — in ONE step.
  *
- * Shown while a case is being introduced and never afterwards. The lesson is
- * two-sided recognition performed from the OLL stage, because that is the
- * recognition a solver actually wants: a sticker keeps its colour through an
- * algorithm, so the front and right rows you are going to read already exist
- * on the cube, and for most cases most of them are already in sight. Compare
- * them, name the block, and where that is not enough, one further comparison
- * decides it — relations among the legible stickers determine the case for all
- * 57 OLLs, so the colours always finish the job.
+ * Which route it teaches is decided per case by `recognitionMethod`, because
+ * the two are not equally useful everywhere: reading the future front and right
+ * rows is the faster skill, but where an algorithm never moves a corner, "the
+ * corners you can see now are the corners you get" collapses half the problem
+ * to nothing and no amount of colour comparison beats it.
  *
- * The pieces come last and briefly. Following corners and edges through the
- * algorithm is the explanation behind the reading, not the reading itself, and
- * putting it first taught the wrong skill.
+ * One step, not three. The lesson used to walk the front row, the right row and
+ * the deciding comparison in sequence, which is three presses and three things
+ * to hold before the cube is ever answered. What survives is the shortest true
+ * statement of the method, with the conclusion kept back for the reveal.
  *
  * Every clause is computed from the algorithm and the state in front of you.
  */
@@ -1143,64 +1231,79 @@ export function buildTeachingBrief(
   const brief = buildRecognitionBrief(oll, alg)
   const map = brief.map
   const comparisons = decidingComparisons(oll, alg, state)
+  const choice = recognitionMethod(oll, alg)
 
-  const rowsTail =
-    read.candidates.length === 1
-      ? `Those six alone say ${read.candidates[0].name} — nothing else reads like that.`
-      : `Both rows together leave ${candidateWords(read.candidates)}.`
+  const lit = [...read.front, ...read.right].filter((s) => s.visible).map((s) => s.from as number)
 
-  const pieceWhy = `${movementClause(map, 'corner')}, and ${movementClause(map, 'edge')}`
+  const first = comparisons[0]
+  const decider = first
+    ? ` Then ${first.a.where} vs ${first.b.where}: ` +
+      first.branches.map((b) => `${RELATION_SHORT[b.relation]} → ${candidateWords(b.candidates, 3)}`).join('; ') +
+      '.'
+    : ''
 
-  let deciding: TeachingStep
-  if (comparisons.length === 0) {
-    deciding = {
-      key: 'deciding',
-      heading: 'Why those stickers',
+  let step: TeachingStep
+  if (choice.method === 'pattern') {
+    const rows =
+      `Front row: ${rowStickers(read.front)}` +
+      `${read.frontPattern ? ` → ${BLOCK_READING[read.frontPattern]}` : ''}. ` +
+      `Right row: ${rowStickers(read.right)}` +
+      `${read.rightPattern ? ` → ${BLOCK_READING[read.rightPattern]}` : ''}.`
+    step = {
+      key: 'method',
+      heading: 'Read the two rows',
       text:
-        `Nothing left to compare — the two rows settled it. They are those six stickers because ` +
-        `${pieceWhy}, and that is what carries them onto the front and right.`,
-      highlight: read.front.concat(read.right).filter((s) => s.visible).map((s) => s.from as number),
-      arrows: true,
+        `${rows}` +
+        (read.candidates.length === 1
+          ? ` That alone is ${read.candidates[0].name}.`
+          : ` That leaves ${candidateWords(read.candidates)}.${decider}`),
+      highlight: lit,
     }
   } else {
-    const first = comparisons[0]
-    const rules = first.branches
-      .map((branch) => `${RELATION_SHORT[branch.relation]} → ${candidateWords(branch.candidates)}`)
-      .join('; ')
-    const second = comparisons[1]
-    const more = second
-      ? ` Then ${second.a.where} against ${second.b.where}: ${RELATION_SHORT[second.actual]}, so ${candidateWords(second.remaining)}.` +
-        (comparisons.length > 2 ? ' One more after that finishes it.' : '')
-      : ''
-    deciding = {
-      key: 'deciding',
-      heading: 'What decides it',
-      text:
-        `Compare ${first.a.where} with ${first.b.where}: ${rules}. ` +
-        `Here: ${RELATION_SHORT[first.actual]}, so ${candidateWords(first.remaining)}.${more}`,
-      highlight: [first.a.facelet, first.b.facelet],
+    /*
+     * A frozen system is the whole point of choosing this route, so it is said
+     * once, plainly, and the slots it holds are not then listed as arrivals —
+     * "UBR stays, UFR stays, UFL stays" is noise directly after "none of them
+     * move".
+     */
+    const parts: string[] = []
+    if (map.cornersFixed) {
+      parts.push(
+        `Corners never move here, only twist — the three you can read now (${TWO_SIDED_CORNER_SLOTS.map((i) => CORNER_SLOTS[i]).join(', ')}) are the three you get.`,
+      )
+    } else {
+      parts.push(`Corners: ${movementClause(map, 'corner')}, so you will read ${arrivalsInto(map, 'corner')}.`)
+    }
+    if (map.edgesFixed) {
+      parts.push(
+        `Edges never move either — ${TWO_SIDED_EDGE_SLOTS.map((i) => EDGE_SLOTS[i]).join(' and ')} stay where they are.`,
+      )
+    } else {
+      parts.push(`Edges: ${movementClause(map, 'edge')}, so ${arrivalsInto(map, 'edge')}.`)
+    }
+    step = {
+      key: 'method',
+      heading: 'Follow the pieces',
+      text: parts.join(' '),
+      highlight: lit,
+      arrows: true,
     }
   }
 
   const landed = landedBlocks(resolved)
-  // Short names here, not the full gloss: it was spelled out two steps ago, and
-  // this line is read at the moment the answer appears.
   const landedWords = [
-    landed.front ? `Front: ${BLOCK_NAME[landed.front]}.` : null,
-    landed.right ? `Right: ${BLOCK_NAME[landed.right]}.` : null,
+    landed.front ? `Front: ${BLOCK_READING[landed.front]}.` : null,
+    landed.right ? `Right: ${BLOCK_READING[landed.right]}.` : null,
   ]
     .filter(Boolean)
     .join(' ')
 
   return [
-    faceStep('front', read.front, read.frontPattern, ''),
-    faceStep('right', read.right, read.rightPattern, rowsTail),
-    deciding,
+    step,
     {
       key: 'result',
       heading: 'What that leaves',
-      text:
-        `${landedWords} That is ${pll.name} perm. Behind it: ${pieceWhy}.`,
+      text: `${landedWords} That is ${pll.name} perm.`,
     },
   ]
 }

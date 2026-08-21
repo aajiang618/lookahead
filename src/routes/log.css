@@ -13,8 +13,7 @@
   display: flex;
   gap: var(--gap-6);
   flex-wrap: wrap;
-  padding-bottom: var(--gap-4);
-  border-bottom: var(--hairline) solid var(--rule);
+  padding-bottom: var(--gap-5);
 }
 
 .log__empty,
@@ -51,8 +50,7 @@
   justify-content: space-between;
   gap: var(--gap-3);
   margin-top: var(--gap-3);
-  padding-top: var(--gap-2);
-  border-top: var(--hairline) solid var(--rule);
+  padding-top: var(--gap-3);
   flex-wrap: wrap;
 }
 
@@ -80,8 +78,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: var(--gap-3);
-  padding: 0.4rem 0;
-  border-bottom: var(--hairline) solid var(--rule);
+  padding: 0.45rem 0;
   color: var(--ink-dim);
 }
 
@@ -117,8 +114,8 @@
   padding: 0.5rem 0.6rem;
   background: var(--ground);
   color: var(--ink);
-  border: var(--hairline) solid var(--rule-strong);
-  border-radius: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
   font: inherit;
   font-size: 0.8125rem;
   cursor: pointer;
@@ -145,27 +142,29 @@
 
 .log__toggle-mark {
   flex: none;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   margin-top: 2px;
-  border: var(--hairline) solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
   position: relative;
-  transition: border-color var(--capture);
+  transition: background-color var(--capture);
 }
 
 .log__toggle input:checked + .log__toggle-mark {
-  border-color: var(--caution);
+  background: var(--caution);
 }
 
 .log__toggle input:checked + .log__toggle-mark::after {
   content: '';
   position: absolute;
-  inset: 3px;
-  background: var(--caution);
+  inset: 4px;
+  border-radius: 2px;
+  background: var(--ground-deep);
 }
 
 .log__toggle input:focus-visible + .log__toggle-mark {
-  outline: var(--hairline) solid var(--caution);
+  outline: 2px solid var(--caution);
   outline-offset: 2px;
 }
 
@@ -202,8 +201,7 @@
   grid-template-columns: 6rem 5rem 4rem 3.5rem minmax(0, 1fr);
   gap: var(--gap-3);
   align-items: baseline;
-  padding: 0.4rem 0;
-  border-bottom: var(--hairline) solid var(--rule);
+  padding: 0.45rem 0;
   font-size: 0.8125rem;
 }
 

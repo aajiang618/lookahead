@@ -1,24 +1,29 @@
-/* Head-up display chrome. Stroke only — no fills, no shadows, no radii on chrome. */
+/*
+ * The interface vocabulary. Soft corners, no borders, almost no lines.
+ *
+ * Grouping is done with a surface a few percent lighter than the ground rather
+ * than with a rule — one fewer line on screen for the same effect. Nothing here
+ * casts a shadow: the softness is in the corners, not in fake depth.
+ */
 
-/* --- Mode annunciator ---------------------------------------------------- */
+/* --- Mode tabs ----------------------------------------------------------- */
 
 .fma {
   display: flex;
   align-items: stretch;
-  gap: 0;
-  border-block: var(--hairline) solid var(--rule);
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
 }
 
 .fma__item {
   position: relative;
-  padding: 0.7rem 1.1rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-pill);
   color: var(--ink-dim);
   transition: color var(--fade);
   white-space: nowrap;
-}
-
-.fma__item + .fma__item {
-  border-left: var(--hairline) solid var(--rule);
 }
 
 .fma__item:hover {
@@ -29,10 +34,16 @@
   color: var(--ink-strong);
 }
 
+/*
+ * The active tab is a filled pill that slides between positions. It used to be
+ * an amber box, which spent the one accent colour on saying where you already
+ * are; the amber is better kept for the control you are meant to press.
+ */
 .fma__box {
   position: absolute;
-  inset: 4px;
-  border: var(--hairline) solid var(--caution);
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-strong);
   pointer-events: none;
 }
 
@@ -44,206 +55,16 @@
   font-weight: 600;
 }
 
-/* --- Tapes --------------------------------------------------------------- */
-
-.tape {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-2);
-  min-width: 4.5rem;
-}
-
-.tape__label {
-  text-align: center;
-  font-size: 0.5625rem;
-  letter-spacing: 0.16em;
-}
-
-.tape__body {
-  position: relative;
-  flex: 1;
-  min-height: 10rem;
-}
-
-.tape__rail {
-  position: absolute;
-  inset-block: 0;
-  width: var(--hairline);
-  background: var(--rule);
-}
-
-.tape[data-side='left'] .tape__rail {
-  right: 0;
-}
-
-.tape[data-side='right'] .tape__rail {
-  left: 0;
-}
-
-.tape__tick {
-  position: absolute;
-  height: var(--hairline);
-  background: var(--rule);
-  width: 6px;
-}
-
-.tape__tick[data-major='true'] {
-  width: 11px;
-  background: var(--rule-strong);
-}
-
-.tape[data-side='left'] .tape__tick {
-  right: 0;
-}
-
-.tape[data-side='right'] .tape__tick {
-  left: 0;
-}
-
-.tape__bug {
-  position: absolute;
-  height: 0;
-  width: 100%;
-}
-
-.tape__bug-mark {
-  position: absolute;
-  width: 15px;
-  height: var(--hairline);
-  background: var(--caution);
-}
-
-.tape[data-side='left'] .tape__bug-mark {
-  right: -2px;
-}
-
-.tape[data-side='right'] .tape__bug-mark {
-  left: -2px;
-}
-
-.tape__pointer {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 0;
-}
-
-.tape[data-side='left'] .tape__pointer {
-  right: 0;
-  flex-direction: row;
-  justify-content: flex-end;
-}
-
-.tape[data-side='right'] .tape__pointer {
-  left: 0;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-}
-
-.tape__reading {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--ink-strong);
-  line-height: 1;
-  padding: 3px 5px;
-  border: var(--hairline) solid var(--rule-strong);
-  background: var(--ground);
-}
-
-.tape__unit {
-  font-style: normal;
-  font-size: 0.5625rem;
-  color: var(--ink-dim);
-  margin-left: 2px;
-  letter-spacing: 0.06em;
-}
-
-.tape__caret {
-  width: 6px;
-  height: 8px;
-  background: var(--ink);
-}
-
-.tape[data-side='left'] .tape__caret {
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
-}
-
-.tape[data-side='right'] .tape__caret {
-  clip-path: polygon(100% 0, 0 50%, 100% 100%);
-}
-
-/* --- Reticle ------------------------------------------------------------- */
-
-.reticle {
-  position: relative;
-  display: grid;
-  place-items: stretch;
-  width: 100%;
-  height: 100%;
-}
-
-.reticle__inner {
-  grid-area: 1 / 1;
-  min-width: 0;
-  min-height: 0;
-}
-
-.reticle__corner {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  border: 1.5px solid var(--ink-faint);
-  pointer-events: none;
-  z-index: 2;
-  transition: border-color var(--capture);
-}
-
-.reticle[data-state='locked'] .reticle__corner {
-  border-color: var(--ink-strong);
-}
-
-.reticle[data-state='missed'] .reticle__corner {
-  border-color: var(--warning);
-}
-
-.reticle__corner[data-corner='tl'] {
-  top: 0;
-  left: 0;
-  border-right: 0;
-  border-bottom: 0;
-}
-
-.reticle__corner[data-corner='tr'] {
-  top: 0;
-  right: 0;
-  border-left: 0;
-  border-bottom: 0;
-}
-
-.reticle__corner[data-corner='bl'] {
-  bottom: 0;
-  left: 0;
-  border-right: 0;
-  border-top: 0;
-}
-
-.reticle__corner[data-corner='br'] {
-  bottom: 0;
-  right: 0;
-  border-left: 0;
-  border-top: 0;
-}
-
-/* --- Panels -------------------------------------------------------------- */
+/* --- Surfaces ------------------------------------------------------------ */
 
 .panel {
-  padding: var(--gap-4);
-  border: var(--hairline) solid var(--rule);
+  padding: var(--gap-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
 .panel__label {
-  margin-bottom: var(--gap-3);
+  margin-bottom: var(--gap-4);
   font-size: 0.5625rem;
   letter-spacing: 0.18em;
 }
@@ -309,44 +130,43 @@
 /* --- Actions ------------------------------------------------------------- */
 
 .action {
-  padding: 0.55rem 1rem;
-  border: var(--hairline) solid var(--rule-strong);
-  color: var(--ink-dim);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   font-weight: 600;
   transition:
     color var(--capture),
-    border-color var(--capture),
     background-color var(--capture);
 }
 
 .action:hover:not(:disabled) {
+  background: var(--surface-strong);
   color: var(--ink-strong);
-  border-color: var(--ink-dim);
 }
 
-/* The one filled control in the app: the thing you press to start. */
+/* The one filled control in the app: the thing you press to go on. */
 .action[data-variant='primary'] {
   background: var(--caution);
-  border-color: var(--caution);
   color: var(--ground-deep);
 }
 
 .action[data-variant='primary']:hover:not(:disabled) {
   background: var(--ink-strong);
-  border-color: var(--ink-strong);
   color: var(--ground-deep);
 }
 
 .action[data-variant='quiet'] {
-  border-color: transparent;
-  padding-inline: 0.35rem;
+  background: none;
+  color: var(--ink-dim);
+  padding-inline: 0.7rem;
 }
 
 .action[data-variant='quiet']:hover:not(:disabled) {
-  border-color: var(--rule);
+  background: var(--surface);
 }
 
 .action:disabled {
@@ -358,8 +178,9 @@
 
 .ladder {
   position: relative;
-  height: 3px;
-  background: var(--ink-ghost);
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-strong);
   overflow: hidden;
 }
 
@@ -367,19 +188,20 @@
   position: absolute;
   inset-block: 0;
   left: 0;
+  border-radius: var(--radius-pill);
   background: var(--ink-dim);
 }
 
 /*
  * Touch. The primary action is pressed once or twice a rep, hundreds of times
  * a session, often one-handed while the other hand holds a cube — so on a
- * coarse pointer it is a full-width, thumb-height target rather than a
- * mouse-sized one.
+ * coarse pointer it is a wide, thumb-height target rather than a mouse-sized
+ * one.
  */
 @media (pointer: coarse) {
   .action {
     min-height: 3rem;
-    padding-inline: 1.5rem;
+    padding-inline: 1.6rem;
   }
 
   .action[data-variant='primary'] {

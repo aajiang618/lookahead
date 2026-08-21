@@ -1,17 +1,20 @@
 /*
  * Lookahead design tokens.
  *
- * The world is a head-up display, so the rules are stricter than usual:
+ * Quiet and soft-edged. Four rules:
  *
- *   - Structure is drawn in STROKE. There are no filled cards, no drop
- *     shadows, no rounded panel chrome. Regions are bounded by 1px rules and
- *     corner registration marks, the way symbology is bounded on a combiner.
- *   - Symbology is MONOCHROME warm ivory with a single caution amber and a
- *     rarely used warning red. A real HUD cannot show more, because it is one
- *     projector behind one piece of glass.
+ *   - SUBTRACT FIRST. If a rule, a tick, a bracket or a border can come out
+ *     without losing meaning, it comes out. Regions are separated by space,
+ *     and given a surface only when they genuinely need to group.
+ *   - Corners are ROUNDED. Every surface and control carries a radius; nothing
+ *     in the interface has a hard corner except the cube.
+ *   - Symbology is MONOCHROME warm ivory with a single amber accent, spent on
+ *     the one control you press and nothing else, and a warning red that
+ *     appears only when an answer was missed.
  *   - The CUBE is the only saturated colour on screen. That is the whole point:
  *     everything the interface says is quiet, and the thing being read is loud.
- *   - No glow, no bloom, no neon. Collimated symbology is crisp, not soft.
+ *
+ * No glow, no bloom, no neon, and no drop shadows: soft corners, flat light.
  */
 
 :root {
@@ -34,8 +37,16 @@
   --ink-faint: rgb(232 228 217 / 32%);
   --ink-ghost: rgb(232 228 217 / 14%);
 
-  --rule: rgb(232 228 217 / 16%);
-  --rule-strong: rgb(232 228 217 / 34%);
+  --rule: rgb(232 228 217 / 10%);
+  --rule-strong: rgb(232 228 217 / 22%);
+
+  /*
+   * Surfaces. A rounded block gets a barely-there lift rather than a border —
+   * one fewer line on screen for the same grouping, which is the whole trade
+   * this design makes.
+   */
+  --surface: rgb(232 228 217 / 4%);
+  --surface-strong: rgb(232 228 217 / 8%);
 
   /* Annunciation ------------------------------------------------------ */
   --caution: #ffb020;
@@ -76,6 +87,12 @@
 
   --hairline: 1px;
   --max-width: 82rem;
+
+  /* Corners ----------------------------------------------------------- */
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
 }
 
 @media (prefers-reduced-motion: reduce) {

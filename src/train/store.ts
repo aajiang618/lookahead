@@ -102,7 +102,12 @@ export interface Settings {
    * trained is only correct for the algorithm actually being executed.
    */
   algChoice: Record<string, number>
-  /** How much of the frame the cube fills. 1 exactly fits; higher is closer. */
+  /**
+   * How much of the frame the cube fills. 1 exactly fits its silhouette; higher
+   * is closer. The default sits below 1 deliberately: a cube that touches the
+   * edges of its frame is harder to read than one with air around it, and the
+   * last layer is read at a glance rather than inspected.
+   */
   cubeZoom: number
   /** Drill prediction from part-way through the algorithm, as a move count. */
   headStart: number
@@ -131,7 +136,7 @@ export const DEFAULT_SETTINGS: Settings = {
   motorSeconds: DEFAULT_MOTOR_SECONDS,
   motorCalibrated: false,
   algChoice: {},
-  cubeZoom: 1.05,
+  cubeZoom: 0.82,
   headStart: 0,
   repsPerExercise: 4,
   showArrows: false,
@@ -282,13 +287,18 @@ export function saveProgress(progress: Progress): void {
   }
 }
 
+/** The cube used to be framed tight; anyone who never changed it gets the air. */
+const PREVIOUS_DEFAULT_ZOOM = 1.05
+
 function migrate(progress: Progress): Progress {
   const base = emptyProgress()
+  const settings = { ...base.settings, ...progress.settings, algChoice: progress.settings?.algChoice ?? {} }
+  if (settings.cubeZoom === PREVIOUS_DEFAULT_ZOOM) settings.cubeZoom = base.settings.cubeZoom
   return {
     ...base,
     ...progress,
     version: SCHEMA_VERSION,
-    settings: { ...base.settings, ...progress.settings, algChoice: progress.settings?.algChoice ?? {} },
+    settings,
     items: progress.items ?? {},
     logRtWindow: progress.logRtWindow ?? [],
     sessions: progress.sessions ?? [],

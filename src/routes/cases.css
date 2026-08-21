@@ -11,7 +11,6 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: var(--hairline) solid var(--rule);
 }
 
 .cases__head {
@@ -20,8 +19,7 @@
   justify-content: space-between;
   gap: var(--gap-4);
   flex-wrap: wrap;
-  padding: var(--gap-3) var(--gap-4);
-  border-bottom: var(--hairline) solid var(--rule);
+  padding: var(--gap-4) var(--gap-4) var(--gap-3);
 }
 
 .cases__counts {
@@ -48,23 +46,23 @@
 
 .cases__filter {
   display: flex;
-  border: var(--hairline) solid var(--rule);
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
 }
 
 .cases__filter-item {
-  padding: 0.3rem 0.6rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
   font-size: 0.5rem;
   color: var(--ink-dim);
   transition: color var(--capture), background-color var(--capture);
 }
 
-.cases__filter-item + .cases__filter-item {
-  border-left: var(--hairline) solid var(--rule);
-}
-
 .cases__filter-item[data-active='true'] {
-  background: var(--ink);
-  color: var(--ground-deep);
+  background: var(--surface-strong);
+  color: var(--ink-strong);
 }
 
 .cases__list {
@@ -81,18 +79,18 @@
   align-items: center;
   gap: var(--gap-3);
   width: 100%;
-  padding: 0.3rem var(--gap-4);
+  padding: 0.4rem var(--gap-3);
+  border-radius: var(--radius-sm);
   text-align: left;
-  border-bottom: var(--hairline) solid var(--rule);
   transition: background-color var(--capture);
 }
 
 .case-row:hover {
-  background: var(--ground-lift);
+  background: var(--surface);
 }
 
 .case-row[data-selected='true'] {
-  background: var(--ground-lift);
+  background: var(--surface-strong);
 }
 
 .case-row[data-selected='true']::before {
@@ -151,7 +149,6 @@
 .case-detail__cube {
   height: 16rem;
   flex: none;
-  border-bottom: var(--hairline) solid var(--rule);
 }
 
 .case-detail__canvas {
@@ -205,8 +202,9 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--gap-3);
   margin: 0;
-  padding-block: var(--gap-3);
-  border-block: var(--hairline) solid var(--rule);
+  padding: var(--gap-4);
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
 .case-detail__stat {
@@ -246,8 +244,8 @@
   padding: 0.5rem 0.6rem;
   background: var(--ground);
   color: var(--ink);
-  border: var(--hairline) solid var(--rule-strong);
-  border-radius: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
   font: inherit;
   font-size: 0.8125rem;
   cursor: pointer;
@@ -273,19 +271,20 @@
 }
 
 .case-detail__toggle {
-  padding: 0.55rem 0.9rem;
-  border: var(--hairline) solid var(--rule-strong);
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
   color: var(--ink-dim);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   font-weight: 600;
-  transition: color var(--capture), border-color var(--capture);
+  transition: color var(--capture), background-color var(--capture);
 }
 
 .case-detail__toggle[data-on='true'] {
   color: var(--caution);
-  border-color: var(--caution);
+  background: var(--surface-strong);
 }
 
 .case-detail__note {
@@ -330,16 +329,11 @@
     overflow-y: auto;
   }
 
-  .cases__list-pane {
-    border-right: 0;
-  }
-
   .cases__list {
     overflow: visible;
   }
 
   .case-detail {
-    border-top: var(--hairline) solid var(--rule);
     overflow: visible;
   }
 }

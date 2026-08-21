@@ -18,8 +18,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--gap-4);
-  padding: var(--gap-3) var(--gap-5);
-  border-bottom: var(--hairline) solid var(--rule);
+  padding: var(--gap-4) var(--gap-5) var(--gap-3);
 }
 
 .stage__where {
@@ -90,6 +89,9 @@
   top: var(--gap-3);
   left: 50%;
   transform: translateX(-50%);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
   font-size: 0.5rem;
   color: var(--caution);
   pointer-events: none;
@@ -98,7 +100,6 @@
 /* --- Bottom strip -------------------------------------------------------- */
 
 .stage__foot {
-  border-top: var(--hairline) solid var(--rule);
   padding: var(--gap-3) var(--gap-5) var(--gap-4);
   /*
    * Tall enough for the taller of the two branches — the ask strip, which
@@ -152,9 +153,10 @@
   content: '';
   position: absolute;
   left: 0;
-  top: 0.55em;
-  width: 8px;
-  height: var(--hairline);
+  top: 0.5em;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-pill);
   background: var(--caution);
 }
 
@@ -232,8 +234,9 @@
 }
 
 .stage__toggle {
-  padding: 0.55rem 0.8rem;
-  border: var(--hairline) solid var(--rule-strong);
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
   color: var(--ink-dim);
   font-size: var(--label-size);
   letter-spacing: var(--label-tracking);
@@ -241,27 +244,27 @@
   font-weight: 600;
   transition:
     color var(--capture),
-    border-color var(--capture);
+    background-color var(--capture);
 }
 
 .stage__toggle[data-on='true'] {
   color: var(--caution);
-  border-color: var(--caution);
 }
 
 .stage__toggle:hover {
+  background: var(--surface-strong);
   color: var(--ink-strong);
 }
 
 /* In the ask strip the toggle is an aside, not a peer of the primary action. */
 .stage__toggle--quiet {
-  border-color: transparent;
-  padding: 0.25rem 0.4rem;
+  background: none;
+  padding: 0.35rem 0.6rem;
   font-size: 0.5rem;
 }
 
 .stage__toggle--quiet:hover {
-  border-color: var(--rule);
+  background: var(--surface);
 }
 
 .action kbd,
@@ -269,9 +272,10 @@
   font: inherit;
   font-size: 0.5625rem;
   margin-left: 0.5rem;
-  padding: 1px 4px;
-  border: var(--hairline) solid currentcolor;
-  opacity: 0.6;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 18%);
+  opacity: 0.55;
 }
 
 /* --- Standby ------------------------------------------------------------- */
@@ -319,9 +323,7 @@
   gap: var(--gap-6);
   flex-wrap: wrap;
   justify-content: center;
-  margin: var(--gap-3) 0 0;
-  padding-top: var(--gap-4);
-  border-top: var(--hairline) solid var(--rule);
+  margin: var(--gap-4) 0 0;
 }
 
 .standby__figure {

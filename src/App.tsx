@@ -52,7 +52,6 @@ export default function App() {
       <header className="shell__head">
         <div className="shell__brand">
           <Wordmark />
-          <span className="shell__tagline label">OLL → PLL recognition</span>
         </div>
         <ModeStrip items={MODES} active={mode} onSelect={go} />
       </header>

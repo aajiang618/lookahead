@@ -365,10 +365,6 @@ function DrillStandby({ session }: { session: Session }) {
 
   return (
     <div className="standby">
-      <div className="standby__mark" aria-hidden="true">
-        <BoresightMark />
-      </div>
-
       {phase === 'finished' ? (
         <>
           <h1 className="standby__title">
@@ -431,21 +427,5 @@ function Figure({ label, value }: { label: string; value: string }) {
       <dt className="label">{label}</dt>
       <dd className="readout">{value}</dd>
     </div>
-  )
-}
-
-/** The boresight cross — the mark a HUD sits everything else around. */
-function BoresightMark() {
-  return (
-    <svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
-      <g fill="none" stroke="var(--ink-ghost)" strokeWidth="1">
-        <circle cx="60" cy="60" r="34" />
-        <circle cx="60" cy="60" r="52" strokeDasharray="2 6" />
-      </g>
-      <g fill="none" stroke="var(--ink-faint)" strokeWidth="1.25">
-        <path d="M60 34v14M60 72v14M34 60h14M72 60h14" />
-      </g>
-      <circle cx="60" cy="60" r="2" fill="var(--caution)" />
-    </svg>
   )
 }

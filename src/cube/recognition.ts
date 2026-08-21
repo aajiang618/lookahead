@@ -1109,7 +1109,7 @@ export function recognitionMethod(oll: OLLCase, alg: string): MethodChoice {
 }
 
 export interface TeachingStep {
-  key: 'method' | 'result'
+  key: 'whole' | 'notice' | 'read' | 'result'
   heading: string
   text: string
   /** Facelets to light while this step is on screen. */
@@ -1276,18 +1276,17 @@ export function buildTeachingBrief(
       ? `${blocks} — only ${pll.name} reads like that`
       : `${blocks} — ${pll.name}, sharing it with ${listOf(others)}`
 
-  let step: TeachingStep
+  /*
+   * How the colours reveal the case, in one clause: the pattern each face lands
+   * in and the PLL that pair means, then either the rows that read it or the
+   * comparison that separates the lookalikes.
+   */
+  let reading: string
   if (choice.method === 'pattern') {
-    step = {
-      key: 'method',
-      heading: 'Learn the pattern',
-      text:
-        `${signature}. ` +
-        (read.candidates.length === 1
-          ? `Read it before you turn: front ${rowStickers(read.front)}; right ${rowStickers(read.right)}.`
-          : `Separate them before you turn: ${decider}.`),
-      highlight: lit,
-    }
+    reading =
+      read.candidates.length === 1
+        ? `${signature}. Read it off front ${rowStickers(read.front)} and right ${rowStickers(read.right)}.`
+        : `${signature}. Separate them: ${decider}.`
   } else {
     const cornerClause = map.cornersFixed
       ? 'corners never move — what you see is what you get'
@@ -1295,14 +1294,14 @@ export function buildTeachingBrief(
     const edgeClause = map.edgesFixed
       ? 'edges never move'
       : `edges ${movementClause(map, 'edge')}, so ${arrivalsInto(map, 'edge')}`
-    step = {
-      key: 'method',
-      heading: 'Learn the pattern',
-      text: `${signature}. Getting there: ${cornerClause}; ${edgeClause}.`,
-      highlight: lit,
-      arrows: true,
-    }
+    reading = `${signature}. Getting there: ${cornerClause}; ${edgeClause}.`
   }
+
+  /* What to look at, named without giving the reading away. */
+  const watchList =
+    read.candidates.length > 0
+      ? `front ${rowStickers(read.front)}; right ${rowStickers(read.right)}`
+      : ''
 
   const landed = landedBlocks(resolved)
   const landedWords = [
@@ -1312,8 +1311,31 @@ export function buildTeachingBrief(
     .filter(Boolean)
     .join(', ')
 
+  /*
+   * Step by step, the way you would be shown at a table: the whole case first,
+   * then the handful of stickers that decide it lit up, then how those colours
+   * name the PLL. The cube is the same throughout — only what is emphasised
+   * changes — so the shape stays in the eye while the words build on it.
+   */
   return [
-    step,
+    {
+      key: 'whole',
+      heading: 'The case',
+      text: `${oll.name}, still unsolved. Before you turn it, read what it will leave.`,
+    },
+    {
+      key: 'notice',
+      heading: 'Notice these',
+      text: `The stickers that decide it: ${watchList}. Their colours are already on the cube — the algorithm only moves them.`,
+      highlight: lit,
+    },
+    {
+      key: 'read',
+      heading: 'How it reads',
+      text: reading,
+      highlight: lit,
+      arrows: choice.method === 'swaps',
+    },
     {
       key: 'result',
       heading: 'It landed as',

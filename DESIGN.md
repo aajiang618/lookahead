@@ -156,12 +156,16 @@ answers are drawn from the cases that genuinely look like the right one — same
 corner and edge classes first, then the same family — because a distractor you
 could rule out without looking at the cube makes the test easier than the skill.
 
-**Teach once, then test.** A case's introduction used to be four readings of the
-same sentence in a row, which is copying rather than learning. Only the first
-introducing rep teaches now; the rest test with four options, and every answer
-carries the same sentence the lesson gave. Review and the guided session work
-the same way, so meeting a case twice never means being told about it in two
-different vocabularies.
+**Teach once, then test — and the teaching is step by step.** A case's
+introduction used to be four readings of one sentence in a row, which is copying
+rather than learning. Only the first introducing rep teaches now, and it walks
+three steps, the way you would be shown at a table: **the case** (the whole cube,
+nothing emphasised), **notice these** (the handful of stickers that decide it lit
+up), then **how it reads** (the pattern those colours make and the PLL it means).
+The cube is the same throughout — only what is emphasised changes — so the shape
+stays in the eye while the words build on it. The rest of the introduction, and
+review, test with four options, and every answer carries the reading step's own
+sentence.
 
 **Four options is the answering surface everywhere** a rep is a test.
 Reveal-and-self-grade survives in settings for anyone who would rather say the

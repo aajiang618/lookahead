@@ -145,13 +145,13 @@ export function Drill({
   const explanation = useMemo(
     () =>
       revealed && trial
-        ? buildTeachingBrief(
+        ? (buildTeachingBrief(
             trial.oll,
             trial.drill.ollAlg,
             trial.drill.state,
             trial.resolved,
             trial.pll,
-          )[0].text
+          ).find((s) => s.key === 'read')?.text ?? null)
         : null,
     [revealed, trial],
   )

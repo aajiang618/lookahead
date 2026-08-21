@@ -173,6 +173,14 @@
 }
 
 .stage__scramble {
+  /*
+   * Fixed at two lines. Scrambles vary from 15 to 25 moves, so an unpinned
+   * line wraps to one or two rows depending on the case and quietly resizes the
+   * cube above it between reps. Two lines holds the tallest; a rare third wraps
+   * inside the scroll rather than growing the strip.
+   */
+  height: 2.1rem;
+  overflow-y: auto;
   font-size: 0.6875rem;
   line-height: 1.5;
   color: var(--ink-dim);
@@ -424,7 +432,11 @@
 
   .stage__foot {
     padding: var(--gap-3);
-    min-height: 19.5rem;
+    /*
+     * The four options wrap to a 2x2 block on a phone, so the ask branch needs
+     * 323px here — measured. Under-reserving grew the cube 10px on every answer.
+     */
+    min-height: 21.5rem;
   }
 
   .stage__answer {

@@ -14,7 +14,7 @@ export const STORAGE_KEY = 'lookahead.progress.v1'
  * version 2 for the colour reading, version 3 for pattern-first teaching with
  * multiple choice throughout.
  */
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 export type ItemPhase = 'locked' | 'introducing' | 'building' | 'maintenance'
 export type LeechKind = 'none' | 'accuracy' | 'fluency'

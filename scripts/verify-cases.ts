@@ -581,15 +581,16 @@ console.log('\nThe lesson: one step, by whichever route the case rewards')
       const steps = buildTeachingBrief(oll, drill.ollAlg, drill.state, drill.stateAfterOLL, pll)
       drills++
 
-      // One step of method, then the answer. Not three.
-      if (steps.length !== 2) wrongShape++
-      if (steps.map((s) => s.key).join() !== 'method,result') wrongShape++
-      // The method step must actually explain; the conclusion is meant to be
-      // terse — "Jb perm — front a 2-bar, right a 2-bar." is complete at 39.
-      if (!steps[0].text || steps[0].text.length < 40) thin++
-      if (!steps[1].text || steps[1].text.length < 20) thin++
-      // The strip is a fixed height and the lesson has to live inside it.
-      if (steps[0].text.length > 260) tooLong++
+      // Four steps: the whole case, the stickers to notice, how it reads, then
+      // the answer — the order you would be shown at a table.
+      if (steps.length !== 4) wrongShape++
+      if (steps.map((s) => s.key).join() !== 'whole,notice,read,result') wrongShape++
+      if (steps.some((s) => !s.text || s.text.length < 20)) thin++
+      if (steps.some((s) => s.text.length > 260)) tooLong++
+      // The whole-case step shows the cube plain; the notice step lights the
+      // deciding stickers.
+      if ((steps[0].highlight ?? []).length !== 0) wrongShape++
+      if ((steps[1].highlight ?? []).length === 0) wrongShape++
 
       // Every narrowing the lesson states out loud must still hold the answer.
       if (!read.candidates.some((c) => c.id === pll.id)) readingLies++
@@ -605,11 +606,12 @@ console.log('\nThe lesson: one step, by whichever route the case rewards')
 
       const lit = steps.flatMap((s) => s.highlight ?? [])
       if (lit.some((f) => !TWO_SIDED_FACELETS.has(f) || oll.state[f] === 'U')) badHighlight++
-      if (!new RegExp(`\\b${pll.name}\\b`).test(steps[1].text)) missesAnswer++
+      const readStep = steps.find((s) => s.key === 'read')
+      if (!readStep || !new RegExp(`\\b${pll.name}\\b`).test(readStep.text)) missesAnswer++
     }
   }
 
-  check('the lesson is one step of method plus the answer', wrongShape === 0, `${wrongShape} were not`)
+  check('the lesson walks whole → notice → read → result', wrongShape === 0, `${wrongShape} were not`)
   check('every step says something substantial', thin === 0, `${thin} too thin`)
   check('no lesson outgrows the strip it has to fit', tooLong === 0, `${tooLong} too long`)
   check('the two-sided read never rules out the true case', readingLies === 0, `${readingLies} did`)
@@ -617,7 +619,7 @@ console.log('\nThe lesson: one step, by whichever route the case rewards')
   check('every branch set is a partition holding the answer', badBranches === 0, `${badBranches} bad`)
   check('colour relations alone always finish the job', unterminated === 0, `${unterminated} of ${drills} undecided`)
   check('everything the lesson lights is legible from the front and right', badHighlight === 0, `${badHighlight} bad`)
-  check('the conclusion names the case in front of you', missesAnswer === 0, `${missesAnswer} missed`)
+  check('the reading step names the case in front of you', missesAnswer === 0, `${missesAnswer} missed`)
   console.log(
     `       (taught by reading the rows: ${byMethod.pattern} cases; by following the pieces: ${byMethod.swaps})`,
   )

@@ -319,18 +319,67 @@
   background: var(--caution);
 }
 
+/*
+ * Below 62rem the list and the detail are separate pages, so whichever is on
+ * screen gets all of it. Sharing gave 57 rows a 268px window with a cube parked
+ * underneath — four cases visible out of fifty-seven, and no way to see the
+ * rest without scrolling a pane most people would not notice was scrollable.
+ */
 @media (max-width: 62rem) {
   .cases {
     grid-template-columns: minmax(0, 1fr);
-    overflow-y: auto;
+    /*
+     * One row, and it fills. Implicit auto rows size to their content, which
+     * left whichever pane was on screen floating in the top half of an
+     * otherwise empty phone screen.
+     */
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .cases__list-pane,
+  .case-detail {
+    min-height: 0;
+    height: 100%;
   }
 
   .cases__list {
-    overflow: visible;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .case-detail {
-    overflow: visible;
+    overflow-y: auto;
+    padding-bottom: calc(var(--gap-5) + env(safe-area-inset-bottom));
+  }
+
+  /* The cube gives up height on a phone; the reference text is what you came for. */
+  .case-detail__cube {
+    height: 12rem;
+  }
+}
+
+.case-detail__back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: var(--gap-3) var(--gap-4) 0;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-pill);
+  color: var(--ink-dim);
+  transition:
+    background-color var(--capture),
+    color var(--capture);
+}
+
+.case-detail__back:hover {
+  background: var(--surface);
+  color: var(--ink-strong);
+}
+
+@media (pointer: coarse) {
+  .case-detail__back {
+    min-height: 2.75rem;
   }
 }
 

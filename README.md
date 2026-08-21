@@ -16,6 +16,14 @@ npm run dev
 
 ## The three screens
 
+**Train** opens on a home page, not straight into a drill. **Today** runs the
+scheduler's plan; **Learn** and **Review** are its two halves, so new material
+and revision can happen at different times of day; **Learn more** spends past
+the day's allowance when you want to. Underneath, **Practise one case** lets you
+pick a PLL and see every OLL that can leave it — deliberately **unscored**,
+because self-selected reps are exactly what breaks a spaced-repetition schedule.
+
+
 The interface is white, plain-typed and soft-cornered: no borders anywhere, no
 uppercase, one burnt-amber accent spent on the single control you press, and the
 cube framed loose with air on every side. The cube is the only saturated colour
@@ -46,15 +54,15 @@ the front and right rows you are going to read **already exist on the cube**,
 and for most cases most of them are already in sight. Where they are is computed
 backwards through the algorithm's own facelet permutation.
 
-**Which of the two is better is a property of the case, so it is measured.**
-Both routes are costed in the same currency — things you must do beyond looking.
-Reading costs an inference per read sticker still hidden under the top colour
-plus the comparisons the colours still need; following pieces costs a mapping
-per deciding piece the algorithm actually moves. Ties go to reading, the faster
-skill. That splits the deck **42 read, 15 followed** — the fifteen being cases
-where half the six stickers are hidden, or where the algorithm freezes a whole
-system (twelve of the 57 never move a corner, five never move an edge) and
-*"what you can see now is what you get"* beats any colour comparison.
+**Colours unless following the pieces is decisively better.** The two are not
+equally good to *memorise*: a colour pattern is a perceptual chunk and chunks
+collapse into a single glance, while a piece mapping is a procedure that costs
+the same every time you run it. So reading wins by default even where it is more
+work today. The exception is not "reading is expensive here" but "there is
+nothing to do here at all" — when an algorithm freezes a whole system, what you
+can already see is what you will be left with. **Twelve of the 57 never move a
+corner and five never move an edge; those seventeen follow the pieces and the
+other forty read the colours.**
 
 Two findings make the reading work, both checked across all 1,197 drills:
 

@@ -29,6 +29,32 @@ import './cases.css'
 
 type Session = ReturnType<typeof useSession>
 
+/**
+ * Whether a media query currently matches.
+ *
+ * The list/detail split is the one layout decision here that CSS cannot make on
+ * its own: at narrow widths the detail is a separate PAGE, which changes what
+ * gets rendered and what the back control means, not merely how it is laid out.
+ */
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+  useEffect(() => {
+    const mql = window.matchMedia(query)
+    const onChange = () => setMatches(mql.matches)
+    mql.addEventListener('change', onChange)
+    // Belt and braces: a resize listener as well, because the whole layout
+    // hangs off this one boolean and a missed event would leave a phone
+    // rendering the desktop split.
+    window.addEventListener('resize', onChange)
+    setMatches(mql.matches)
+    return () => {
+      mql.removeEventListener('change', onChange)
+      window.removeEventListener('resize', onChange)
+    }
+  }, [query])
+  return matches
+}
+
 interface Row {
   oll: OLLCase
   item: ItemProgress | undefined
@@ -38,10 +64,25 @@ interface Row {
   status: 'locked' | 'learning' | 'automatic'
 }
 
-export function Cases({ session }: { session: Session }) {
+export function Cases({
+  session,
+  selectedId,
+  onSelect,
+}: {
+  session: Session
+  /** The case in the URL, or null for the list on its own. */
+  selectedId: string | null
+  onSelect: (id: string | null) => void
+}) {
   const { progress, threshold, settings } = session
-  const [selectedId, setSelectedId] = useState<string>(OLL_CASES[0].id)
   const [filter, setFilter] = useState<'all' | 'learning' | 'automatic' | 'locked'>('all')
+
+  /*
+   * Below this width the list and the detail are separate pages rather than two
+   * panes. Sharing a phone screen gave 57 rows a 268px window with a cube
+   * parked under it — you could see four cases at a time out of fifty-seven.
+   */
+  const narrow = useMediaQuery('(max-width: 62rem)')
 
   const rows: Row[] = useMemo(
     () =>
@@ -67,7 +108,9 @@ export function Cases({ session }: { session: Session }) {
   )
 
   const shown = rows.filter((r) => filter === 'all' || r.status === filter)
-  const selected = rows.find((r) => r.oll.id === selectedId) ?? rows[0]
+  const selected = selectedId ? (rows.find((r) => r.oll.id === selectedId) ?? null) : null
+  // Wide enough for both, so something is always in the detail pane.
+  const detail = selected ?? (narrow ? null : rows[0])
 
   const counts = {
     automatic: rows.filter((r) => r.status === 'automatic').length,
@@ -75,9 +118,13 @@ export function Cases({ session }: { session: Session }) {
     locked: rows.filter((r) => r.status === 'locked').length,
   }
 
+  // On a phone one of the two is on screen at a time, never both.
+  const showList = !narrow || !selected
+  const showDetail = Boolean(detail) && (!narrow || Boolean(selected))
+
   return (
-    <div className="cases">
-      <div className="cases__list-pane">
+    <div className="cases" data-narrow={narrow}>
+      <div className="cases__list-pane" hidden={!showList}>
         <header className="cases__head">
           <div className="cases__counts">
             <Count label="Automatic" value={counts.automatic} tone="good" />
@@ -109,7 +156,7 @@ export function Cases({ session }: { session: Session }) {
                 className="case-row"
                 data-status={row.status}
                 data-selected={row.oll.id === selectedId}
-                onClick={() => setSelectedId(row.oll.id)}
+                onClick={() => onSelect(row.oll.id)}
               >
                 <CaseDiagram facelets={row.oll.state} mode="orientation" size={38} />
                 <span className="case-row__name">
@@ -131,7 +178,15 @@ export function Cases({ session }: { session: Session }) {
         </ul>
       </div>
 
-      {selected && <CaseDetail row={selected} session={session} threshold={threshold} settings={settings} />}
+      {showDetail && detail && (
+        <CaseDetail
+          row={detail}
+          session={session}
+          threshold={threshold}
+          settings={settings}
+          onBack={narrow ? () => onSelect(null) : null}
+        />
+      )}
     </div>
   )
 }
@@ -154,11 +209,14 @@ function CaseDetail({
   session,
   threshold,
   settings,
+  onBack,
 }: {
   row: Row
   session: Session
   threshold: number
   settings: Session['settings']
+  /** Set when the detail is its own page and needs a way back to the list. */
+  onBack: (() => void) | null
 }) {
   const cubeRef = useRef<CubeHandle>(null)
   const { oll, item } = row
@@ -208,6 +266,11 @@ function CaseDetail({
 
   return (
     <div className="case-detail">
+      {onBack && (
+        <button type="button" className="case-detail__back label" onClick={onBack}>
+          <span aria-hidden="true">←</span> All cases
+        </button>
+      )}
       <div className="case-detail__cube">
         <CubeView3D
           ref={cubeRef}

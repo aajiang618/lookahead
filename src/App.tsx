@@ -1,45 +1,93 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ModeStrip } from './components/Hud.tsx'
 import { Drill } from './routes/Drill.tsx'
+import { TrainHome } from './routes/TrainHome.tsx'
 import { Cases } from './routes/Cases.tsx'
 import { Log } from './routes/Log.tsx'
-import { useSession } from './train/useSession.ts'
+import { useSession, GUIDED, type SessionMode } from './train/useSession.ts'
 import { auditCases } from './cube/cases.ts'
 import './app.css'
 
 const MODES = [
-  { id: 'drill', label: 'Train' },
+  { id: 'train', label: 'Train' },
   { id: 'cases', label: 'Cases' },
   { id: 'log', label: 'Log' },
 ]
 
-const VALID = new Set(MODES.map((m) => m.id))
-
-function readHash(): string {
-  const raw = window.location.hash.replace('#/', '').replace('#', '')
-  return VALID.has(raw) ? raw : 'drill'
+/**
+ * Hash routing, one level deep.
+ *
+ * `#/train` is a page in its own right now rather than a synonym for the drill,
+ * so the route has to carry which session is running: `#/train/learn`,
+ * `#/train/pll/t`. Deep enough for the app and shallow enough to read.
+ */
+function readHash(): string[] {
+  const raw = window.location.hash.replace(/^#\/?/, '')
+  const parts = raw.split('/').filter(Boolean)
+  // `drill` was the old name for this tab; keep old links working.
+  if (parts[0] === 'drill') parts[0] = 'train'
+  if (parts.length === 0 || !['train', 'cases', 'log'].includes(parts[0])) return ['train']
+  return parts
 }
 
 export default function App() {
   const session = useSession()
-  const [mode, setMode] = useState(readHash)
+  const [route, setRoute] = useState<string[]>(readHash)
 
-  // Hash routing, so a mode survives a reload and the back button works.
   useEffect(() => {
-    const onHash = () => setMode(readHash())
+    const onHash = () => setRoute(readHash())
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  const go = (next: string) => {
-    window.location.hash = `/${next}`
-    setMode(next)
-  }
+  const go = useCallback((path: string) => {
+    window.location.hash = `/${path}`
+    setRoute(readHash())
+  }, [])
+
+  const tab = route[0]
+
+  // The session a route asks for, started once on arrival.
+  const startSession = useCallback(
+    (mode: SessionMode) => {
+      session.start(mode)
+      go(
+        mode.kind === 'practice'
+          ? `train/pll/${mode.pllId}`
+          : mode.kind === 'guided'
+            ? 'train/today'
+            : `train/${mode.kind}${mode.kind === 'learn' && mode.more ? '/more' : ''}`,
+      )
+    },
+    [session, go],
+  )
+
+  /*
+   * Leaving a drill returns to the tab's home rather than to standby. Standby
+   * was the only place a session could end up, which meant the way out of a
+   * session was a screen that mostly asked you to start another one.
+   */
+  const leaveDrill = useCallback(() => go('train'), [go])
 
   // The case data is generated from algorithms at load. If that ever produced
   // something inconsistent, the trainer would teach the wrong answer with total
   // confidence, so say so loudly rather than drilling on bad data.
   const [dataProblems] = useState(() => auditCases())
+
+  const inSession = tab === 'train' && route.length > 1
+  /*
+   * The route names the session, so reloading the page on `#/train/review` — or
+   * opening it from a home-screen shortcut — starts a review rather than
+   * landing on an empty screen that has forgotten what it was for.
+   */
+  const routeMode: SessionMode =
+    route[1] === 'learn'
+      ? { kind: 'learn', more: route[2] === 'more' }
+      : route[1] === 'review'
+        ? { kind: 'review' }
+        : route[1] === 'pll' && route[2]
+          ? { kind: 'practice', pllId: route[2] }
+          : GUIDED
 
   return (
     <>
@@ -53,7 +101,7 @@ export default function App() {
         <div className="shell__brand">
           <Wordmark />
         </div>
-        <ModeStrip items={MODES} active={mode} onSelect={go} />
+        <ModeStrip items={MODES} active={tab} onSelect={(id) => go(id)} />
       </header>
 
       {dataProblems.length > 0 && (
@@ -63,15 +111,32 @@ export default function App() {
       )}
 
       <main id="main" className="shell__main">
-        {mode === 'drill' && <Drill session={session} />}
-        {mode === 'cases' && <Cases session={session} />}
-        {mode === 'log' && <Log session={session} />}
+        {tab === 'train' &&
+          (inSession ? (
+            <Drill session={session} mode={routeMode} onLeave={leaveDrill} />
+          ) : (
+            <TrainHome
+              session={session}
+              onStart={startSession}
+              onPickPll={(pllId) => startSession({ kind: 'practice', pllId })}
+            />
+          ))}
+        {tab === 'cases' && (
+          <Cases
+            session={session}
+            selectedId={route[1] ?? null}
+            onSelect={(id) => go(id ? `cases/${id}` : 'cases')}
+          />
+        )}
+        {tab === 'log' && <Log session={session} />}
       </main>
     </>
   )
 }
 
-/** The mark: four corner brackets and a boresight, the app's own grammar. */
+export { GUIDED }
+
+/** The mark: four corner brackets and a cross, the app's own grammar. */
 function Wordmark() {
   return (
     <span className="wordmark">

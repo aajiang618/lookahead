@@ -45,6 +45,27 @@ import {
 
 export type SessionPhase = 'idle' | 'presenting' | 'feedback' | 'finished'
 
+/**
+ * What a session is for.
+ *
+ *  - `guided` — the day's mix: whatever is due, plus new cases as the gate
+ *    allows. The default, and the one the scheduler is designed around.
+ *  - `learn` — new material only, taught then tested, until the day's
+ *    allowance is used up.
+ *  - `review` — what is due today and nothing new.
+ *  - `practice` — a PLL you picked, drilled against every OLL that can leave
+ *    it. Deliberately UNSCORED: self-selected reps are exactly the input that
+ *    breaks a spaced-repetition schedule, and the point of picking is to work
+ *    on something now, not to tell the scheduler what you know.
+ */
+export type SessionMode =
+  | { kind: 'guided' }
+  | { kind: 'learn'; more?: boolean }
+  | { kind: 'review' }
+  | { kind: 'practice'; pllId: string }
+
+export const GUIDED: SessionMode = { kind: 'guided' }
+
 export interface Trial {
   itemId: string
   oll: OLLCase
@@ -127,6 +148,8 @@ export function useSession() {
     setPhaseState(next)
   }, [])
   const [trial, setTrial] = useState<Trial | null>(null)
+  const modeRef = useRef<SessionMode>(GUIDED)
+  const [mode, setModeState] = useState<SessionMode>(GUIDED)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [stopReason, setStopReason] = useState('')
 
@@ -173,8 +196,11 @@ export function useSession() {
 
     const seed = randomSeed()
     const rng = mulberry32(seed)
-    // Which PLL results is the thing being learned, so it varies every rep.
-    const pll = PLL_CASES[Math.floor(rng() * PLL_CASES.length)]
+    // Which PLL results is the thing being learned, so it varies every rep —
+    // unless the solver has picked one to work on, in which case it is fixed
+    // and the OLL in front of it is what varies.
+    const chosen = modeRef.current.kind === 'practice' ? PLL_BY_ID.get(modeRef.current.pllId) : null
+    const pll = chosen ?? PLL_CASES[Math.floor(rng() * PLL_CASES.length)]
     const drill = buildDrill(oll, pll, seed, {
       varyAngle: current.settings.varyAngle,
       varyAuf: current.settings.varyAuf,
@@ -263,13 +289,23 @@ export function useSession() {
       medianRt7d: medianRtOverDays(current, 7),
       medianRt28d: medianRtOverDays(current, 28),
       introducedThisSession: newThisSessionRef.current,
-      introducedToday: (current.newByDay[today()] ?? []).length,
+      /*
+       * "Learn more" spends past the day's allowance on purpose. The cap on how
+       * many cases can be in progress at once still applies — that one is not a
+       * pace preference, it is the thing that stops six half-learned cases
+       * turning into six badly-learned ones.
+       */
+      introducedToday:
+        modeRef.current.kind === 'learn' && modeRef.current.more
+          ? 0
+          : (current.newByDay[today()] ?? []).length,
       trialsDone: trialIndexRef.current,
       hasCandidates: candidates.ids.length > 0,
       poolSize,
     })
 
-    if (decision.allowed) {
+    const wantsNew = modeRef.current.kind === 'guided' || modeRef.current.kind === 'learn'
+    if (decision.allowed && wantsNew) {
       // Seeding a fresh profile bypasses the per-session and per-day caps: it
       // is bootstrapping the deck, not adding to an existing workload.
       const bootstrapping = Object.keys(current.items).length === 0
@@ -307,9 +343,27 @@ export function useSession() {
 
     // --- Choose ---
     const nextPool = composePool(current, 100)
-    const ids = [...nextPool.building, ...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
+    const kind = modeRef.current.kind
+    const ids =
+      kind === 'learn'
+        ? nextPool.building.filter((id) => current.items[id]?.phase !== 'maintenance')
+        : kind === 'review'
+          ? [...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
+          : kind === 'practice'
+            ? Object.values(current.items)
+                .filter((i) => !i.parked)
+                .map((i) => i.id)
+            : [...nextPool.building, ...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
     if (ids.length === 0) {
-      finish('Nothing left to drill today')
+      finish(
+        kind === 'learn'
+          ? 'Nothing new to learn right now'
+          : kind === 'review'
+            ? 'Nothing due for review'
+            : kind === 'practice'
+              ? 'No cases unlocked to practise with yet'
+              : 'Nothing left to drill today',
+      )
       return
     }
 
@@ -362,7 +416,9 @@ export function useSession() {
   // Lifecycle
   // -------------------------------------------------------------------------
 
-  const start = useCallback(() => {
+  const start = useCallback((next: SessionMode = GUIDED) => {
+    modeRef.current = next
+    setModeState(next)
     sessionIdRef.current = `s-${Date.now().toString(36)}`
     startedAtRef.current = Date.now()
     trialIndexRef.current = 0
@@ -403,6 +459,26 @@ export function useSession() {
         caseKey: active.pll.name,
       }
       const graded = gradeAnswer(correct, raw, current.settings.motorSeconds, ctx)
+
+      /*
+       * Practice is not evidence. The case was chosen by the solver rather than
+       * by the schedule, so folding it into FSRS or the latency baseline would
+       * teach the scheduler what the solver decided to practise instead of what
+       * they actually know.
+       */
+      if (modeRef.current.kind === 'practice') {
+        setFeedback({
+          correct,
+          chosen: chosenPllId ? (PLL_BY_ID.get(chosenPllId) ?? null) : null,
+          netRt: netSeconds(raw, current.settings.motorSeconds),
+          reason: 'Practice — not scored',
+          grade: graded.grade,
+          mastered: false,
+          confusedWith: null,
+        })
+        setPhase('feedback')
+        return
+      }
 
       const updated = applyTrial(
         item,
@@ -545,6 +621,7 @@ export function useSession() {
     progress,
     settings,
     baseline,
+    mode,
     threshold,
     phase,
     trial,

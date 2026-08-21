@@ -31,7 +31,6 @@ import {
   CORNER_LABELS,
   CORNER_SLOT_FACELETS,
   CORNER_SLOTS,
-  describePieceMap,
   EDGE_LABELS,
   EDGE_SLOT_FACELETS,
   EDGE_SLOTS,
@@ -534,22 +533,6 @@ export function buildRecognitionBrief(oll: OLLCase, alg: string): RecognitionBri
 // Hints
 // ---------------------------------------------------------------------------
 
-/** How a block of three last-layer stickers reads, in the words cubers use. */
-const BLOCK_NAME: Record<string, string> = {
-  bar: 'a solid three-bar',
-  headlights: 'headlights',
-  'outer-pair': 'a two-bar',
-  checker: 'no block',
-}
-
-/** What that name means in terms of colours, glossed once per pattern. */
-const BLOCK_GLOSS: Record<string, string> = {
-  bar: 'all three the same colour',
-  headlights: 'the two outer stickers the same, the middle one different',
-  'outer-pair': 'one adjacent pair the same, the third different',
-  checker: 'all three colours different',
-}
-
 /** "a, b or c" rather than "a or b or c". */
 function listOf(items: string[]): string {
   if (items.length <= 1) return items[0] ?? ''
@@ -575,51 +558,58 @@ export interface Hint {
 }
 
 /**
- * A ladder, not a lump.
+ * A ladder, not a lump — and the same explanation the lesson gave.
  *
- * Each rung gives away strictly more than the last: where to look, then what
- * the algorithm does to those pieces, then what pattern you will be left with.
- * Only the last rung comes close to the answer, and by then the rep has already
- * stopped counting toward pace — see `applyTrial`.
+ * A hint used to be a different account of the case from the one it was taught
+ * with: pieces, then arrows, then shape. Two vocabularies for one skill is one
+ * too many, so a hint is now the colour reading, handed over a rung at a time —
+ * where to look, what it says, and finally the comparison that settles it.
+ *
+ * Each rung gives away strictly more than the last, and by the last the rep has
+ * already stopped counting toward pace; see `applyTrial`.
  */
-export function hintsFor(oll: OLLCase, alg: string, resolved: Facelets, pll: PLLCase): Hint[] {
-  const needed = necessaryPieces(oll, alg)
-  const corners = needed.filter((p) => p.kind === 'corner').map((p) => CORNER_SLOTS[p.slot])
-  const edges = needed.filter((p) => p.kind === 'edge').map((p) => EDGE_SLOTS[p.slot])
-  const lit = hintFacelets(oll, alg)
+export function hintsFor(oll: OLLCase, alg: string, state: Facelets, pll: PLLCase): Hint[] {
+  const read = readTwoSided(oll, alg, state)
+  const comparisons = decidingComparisons(oll, alg, state)
+  const lit = [...read.front, ...read.right].filter((s) => s.visible).map((s) => s.from as number)
 
-  const reading = readDrill(resolved)
-  const frontPattern = pll.recognition.faces.F
-  const rightPattern = pll.recognition.faces.R
-  const candidates = reading.candidates.map((c) => c.name)
-
-  // Gloss each distinct pattern once, not once per face.
-  const gloss = [...new Set([frontPattern, rightPattern])]
-    .map((p) => `${BLOCK_NAME[p]} = ${BLOCK_GLOSS[p]}`)
-    .join('; ')
-
-  return [
+  const rows: Hint[] = [
     {
       text:
-        `Only five pieces decide this: the ${corners.join(', ')} corners and the ` +
-        `${edges.join(' and ')} edges. The other three follow from them.`,
-      highlight: lit,
-    },
-    {
-      text: describePieceMap(pieceMapOf(alg)),
-      arrows: true,
+        `Read what is about to become your front row — ${read.front.map((s) => s.where).join(', ')} — ` +
+        `and your right row — ${read.right.map((s) => s.where).join(', ')}.`,
       highlight: lit,
     },
     {
       text:
-        `When it lands: ${BLOCK_NAME[frontPattern]} on the front, ` +
-        `${BLOCK_NAME[rightPattern]} on the right — ${gloss}. ` +
-        (candidates.length === 1
-          ? 'Exactly one case looks like that.'
-          : `That narrows it to ${listOf(candidates)}.`),
-      arrows: true,
+        `${read.frontPattern ? `They land as ${BLOCK_READING[read.frontPattern]} on the front` : 'The front cannot be read in full yet'}` +
+        `${read.rightPattern ? ` and ${BLOCK_READING[read.rightPattern]} on the right` : ' and nor can the right'}. ` +
+        (read.candidates.length === 1
+          ? `Only ${read.candidates[0].name} reads like that.`
+          : `That leaves ${candidateWords(read.candidates)}.`),
+      highlight: lit,
     },
   ]
+
+  if (comparisons.length > 0) {
+    const first = comparisons[0]
+    rows.push({
+      text:
+        `Compare ${first.a.where} with ${first.b.where}: ` +
+        first.branches
+          .map((b) => `${RELATION_SHORT[b.relation]} → ${candidateWords(b.candidates, 3)}`)
+          .join('; ') +
+        '.',
+      highlight: [first.a.facelet, first.b.facelet],
+    })
+  } else {
+    rows.push({
+      text: `Nothing else to compare — those six stickers name it on their own: ${pll.name}.`,
+      highlight: lit,
+    })
+  }
+
+  return rows
 }
 
 // ---------------------------------------------------------------------------
@@ -1023,6 +1013,8 @@ export type RecognitionMethod = 'pattern' | 'swaps'
 
 export interface MethodChoice {
   method: RecognitionMethod
+  /** True when the algorithm never permutes one of the two systems. */
+  frozenSystem: boolean
   /** Read stickers still under the top colour, which must be inferred. */
   hiddenReadStickers: number
   /** Comparisons the colours need beyond the two rows, averaged over outcomes. */
@@ -1038,14 +1030,22 @@ export interface MethodChoice {
 const methodCache = new Map<string, MethodChoice>()
 
 /**
- * Cost both routes in the same currency — things you must do beyond looking —
- * and take the cheaper.
+ * Read the colours unless following the pieces is decisively better.
  *
- * Reading costs one inference per read sticker still hidden under the top
- * colour, plus whatever comparisons the colours still need afterwards.
- * Tracking costs one mapping per deciding piece the algorithm actually moves,
- * plus the same inference for any of those you cannot identify yet. A tie goes
- * to reading, which is the faster skill and the one worth building.
+ * The two are not equally good to MEMORISE, which is the thing that matters
+ * here. A colour pattern is a perceptual chunk and chunks collapse into a
+ * single glance with practice; a piece mapping is a procedure, and a procedure
+ * costs roughly the same every time you run it. So reading wins by default
+ * even where it is more work today, because it is the route that gets faster.
+ *
+ * The exception is not "reading is expensive here" — it is "there is nothing to
+ * do here at all". When an algorithm freezes a whole system, the corners or the
+ * edges you can already see are the ones you will be left with, and that is not
+ * a mapping to memorise, it is permission to skip half the problem. Zero work
+ * beats cheap work, so those cases follow the pieces and the other 40 read.
+ *
+ * The costs are still measured, and still recorded on the choice, because they
+ * are what the wording of the lesson is built from.
  */
 export function recognitionMethod(oll: OLLCase, alg: string): MethodChoice {
   const key = `${oll.id}|${alg}`
@@ -1092,8 +1092,11 @@ export function recognitionMethod(oll: OLLCase, alg: string): MethodChoice {
   const patternCost = hiddenReadStickers + meanComparisons
   const swapCost = movedPieces + hiddenPieces
 
+  const frozenSystem = map.cornersFixed || map.edgesFixed
+
   const choice: MethodChoice = {
-    method: patternCost <= swapCost ? 'pattern' : 'swaps',
+    method: frozenSystem ? 'swaps' : 'pattern',
+    frozenSystem,
     hiddenReadStickers,
     meanComparisons,
     movedPieces,

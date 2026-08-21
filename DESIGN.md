@@ -114,9 +114,29 @@ The cube's turn animation is cubic ease-out, matching a well-tensioned puzzle.
 
 ## Surfaces
 
-Three: **Train**, **Cases**, **Log**. Train is the cube. Cases is the per-OLL
-progress tracker with a detail pane — the list *is* the tracker, so progress and
-reference are one surface rather than two. Log is history and settings.
+Three tabs: **Train**, **Cases**, **Log**.
+
+**Train is a page now, not a synonym for the drill.** It opens on a home screen
+with the day's work on it and the drill one press away. Two ways in, and they
+are deliberately not equals:
+
+- **Today**, and its two halves **Learn** and **Review** — the scheduler's own
+  plan, split so new material and revision can be done at different times of day.
+  **Learn more** spends past the day's allowance on purpose; the cap on how many
+  cases may be in progress at once still applies, because that one is not a pace
+  preference but the thing that stops six half-learned cases becoming six badly
+  learned ones.
+- **Practise one case** — pick a PLL and see every OLL that can leave it. This is
+  **unscored**, and that is the point: self-selected reps are exactly the input
+  that breaks a spaced-repetition schedule. Picking says "I want to work on this
+  now", not "this is what I know".
+
+**Cases is master–detail, and on a phone those are separate pages.** Sharing one
+screen gave 57 rows a 268px window with a cube parked underneath — four cases
+visible out of fifty-seven, in a pane most people would not notice was
+scrollable. Below 62rem the list fills the screen, tapping a case opens it as its
+own page, and a back control returns. The route carries the selection
+(`#/cases/oll-4`), so a case can be linked to and survives a reload.
 
 ## Layout
 
@@ -177,22 +197,22 @@ of the method, with the conclusion kept back for the reveal. The suite enforces
 it: two steps, method then answer, and no lesson longer than 260 characters,
 because the strip it lives in is a fixed height.
 
-**Which method depends on the case, and is measured rather than chosen.**
-`recognitionMethod` costs both routes in the same currency — things you must do
-beyond looking:
+**Which method depends on the case, and the bar for leaving the colours is
+high.** Reading and following pieces are not equally good to *memorise*: a
+colour pattern is a perceptual chunk and chunks collapse into a single glance
+with practice, while a piece mapping is a procedure that costs about the same
+every time you run it. So reading wins by default even where it is more work
+today, because it is the route that gets faster.
 
-- **Reading the rows** costs one inference per read sticker still under the top
-  colour, plus the comparisons the colours still need afterwards, averaged over
-  every reading the case can present.
-- **Following the pieces** costs one mapping per deciding piece the algorithm
-  actually moves, plus the same inference for any you cannot identify yet.
+The exception is not "reading is expensive here" — it is "there is nothing to do
+here at all". When an algorithm freezes a whole system, the corners or edges you
+can already see are the ones you will be left with, and that is not a mapping to
+memorise, it is permission to skip half the problem. Zero work beats cheap work.
+**Twelve of the 57 never move a corner and five never move an edge; those
+seventeen follow the pieces and the other forty read the colours.**
 
-A tie goes to reading, which is the faster skill and the one worth building.
-That splits the deck **42 cases read, 15 followed**. The fifteen are the ones
-where reading is genuinely worse: either three of the six read stickers are
-still hidden, or the algorithm freezes a whole system — twelve of the 57 never
-move a corner, five never move an edge — and *"the corners you can read now are
-the corners you get"* beats any colour comparison.
+Both costs are still measured and still recorded on the choice, because they are
+what the wording of the lesson is built from.
 
 The average is taken over distinct readings rather than over the 84 outcome
 states. Same number, a tenth of the work, which matters because it runs on a
@@ -248,6 +268,16 @@ lives in localStorage. There is no server state to be stale about.
 **An unoriented sticker is grey**, the way every algorithm sheet has drawn it.
 It was near-black, which on a white page turned a dot case into eight black
 squares — the cube looked switched off rather than unsolved.
+
+## A hint is the lesson, one rung at a time
+
+A hint used to be a different account of the case from the one it was taught
+with — pieces, then arrows, then shape — while the lesson spoke in colours. Two
+vocabularies for one skill is one too many. A hint is now the colour reading
+handed over in three rungs: where to look, what it says, and the comparison that
+settles it. The first rung is the only one safe to take on a rep you still mean
+to answer, and the suite holds it to that: it may not name a case and may not
+say what the reading leaves.
 
 ## Hints hold the layout still
 

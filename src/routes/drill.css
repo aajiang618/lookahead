@@ -63,6 +63,14 @@
   white-space: nowrap;
 }
 
+.stage__mode {
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+
 .stage__reps {
   font-style: normal;
   color: var(--ink-dim);
@@ -380,6 +388,11 @@
 }
 
 .standby__go {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-3);
+  flex-wrap: wrap;
+  justify-content: center;
   margin-top: var(--gap-4);
 }
 

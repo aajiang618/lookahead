@@ -29,13 +29,25 @@ import {
 import { SPEED_TIERS } from '../train/latency.ts'
 import { newLoadCount } from '../train/scheduler.ts'
 import { itemLabel } from '../train/curriculum.ts'
-import type { useSession } from '../train/useSession.ts'
+import type { SessionMode, useSession } from '../train/useSession.ts'
 import './drill.css'
 
 type Session = ReturnType<typeof useSession>
 
-export function Drill({ session }: { session: Session }) {
+export function Drill({
+  session,
+  mode,
+  onLeave,
+}: {
+  session: Session
+  mode: SessionMode
+  onLeave: () => void
+}) {
   const cubeRef = useRef<CubeHandle>(null)
+  const leave = useCallback(() => {
+    session.end()
+    onLeave()
+  }, [session, onLeave])
   const { phase, trial, exercise, feedback, settings, hintLevel } = session
 
   const revealed = phase === 'feedback'
@@ -79,7 +91,7 @@ export function Drill({ session }: { session: Session }) {
   // The hint ladder: where to look, then what the algorithm does, then what
   // pattern you will be left with. Each rung gives away strictly more.
   const hints = useMemo(
-    () => (trial ? hintsFor(trial.oll, trial.drill.ollAlg, trial.resolved, trial.pll) : []),
+    () => (trial ? hintsFor(trial.oll, trial.drill.ollAlg, trial.drill.state, trial.pll) : []),
     [trial],
   )
   const taken = hints.slice(0, hintLevel)
@@ -128,7 +140,7 @@ export function Drill({ session }: { session: Session }) {
       }
       if (event.key === 'Escape') {
         event.preventDefault()
-        session.end()
+        leave()
         return
       }
       if (event.key === 'h') {
@@ -137,7 +149,7 @@ export function Drill({ session }: { session: Session }) {
       }
       if (event.code === 'Space') {
         event.preventDefault()
-        if (phase === 'idle' || phase === 'finished') session.start()
+        if (phase === 'idle' || phase === 'finished') session.start(mode)
         else if (phase === 'presenting' && teaching) teachAdvance()
         else if (phase === 'presenting' && settings.answerMode === 'reveal') session.reveal()
         else if (phase === 'feedback' && feedback?.reason !== 'Grade yourself') session.next()
@@ -152,9 +164,10 @@ export function Drill({ session }: { session: Session }) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, feedback, session, settings.answerMode, toggleArrows, teaching, teachAdvance, trial])
+  }, [phase, feedback, session, settings.answerMode, toggleArrows, teaching, teachAdvance, trial, leave, mode])
 
-  if (phase === 'idle' || phase === 'finished') return <DrillStandby session={session} />
+  if (phase === 'idle' || phase === 'finished')
+    return <DrillStandby session={session} mode={mode} onLeave={onLeave} />
   if (!trial) return null
 
   const selfGrading = revealed && feedback?.reason === 'Grade yourself'
@@ -165,13 +178,23 @@ export function Drill({ session }: { session: Session }) {
         <button
           type="button"
           className="stage__back label"
-          onClick={session.end}
+          onClick={leave}
           title="Leave this session (Esc)"
         >
           <span aria-hidden="true">←</span> Back
         </button>
         <div className="stage__where">
           <h1 className="stage__case">{trial.oll.name}</h1>
+          {/* Say what this session is when it is not the ordinary one. */}
+          {session.mode.kind !== 'guided' && (
+            <span className="stage__mode label">
+              {session.mode.kind === 'practice'
+                ? `Practising ${trial.pll.name} · not scored`
+                : session.mode.kind === 'learn'
+                  ? 'Learning'
+                  : 'Review'}
+            </span>
+          )}
           {/*
             The exercise number used to sit here too. It is not something a
             solver can act on, and at plain sentence case the two counters
@@ -371,7 +394,15 @@ export function Drill({ session }: { session: Session }) {
 // Standby
 // ---------------------------------------------------------------------------
 
-function DrillStandby({ session }: { session: Session }) {
+function DrillStandby({
+  session,
+  mode,
+  onLeave,
+}: {
+  session: Session
+  mode: SessionMode
+  onLeave: () => void
+}) {
   const { progress, phase, stats, stopReason, baseline } = session
   const items = Object.values(progress.items)
   const automatic = items.filter((i) => i.phase === 'maintenance').length
@@ -431,9 +462,10 @@ function DrillStandby({ session }: { session: Session }) {
       )}
 
       <div className="standby__go">
-        <Action variant="primary" onClick={session.start}>
+        <Action variant="primary" onClick={() => session.start(mode)}>
           {phase === 'finished' ? 'Again' : 'Begin'} <kbd>Space</kbd>
         </Action>
+        <Action onClick={onLeave}>Done</Action>
       </div>
     </div>
   )

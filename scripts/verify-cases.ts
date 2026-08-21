@@ -499,64 +499,59 @@ console.log('\nRecognition: only the pieces that decide the answer')
   check('a swap arc has a head at both ends', cones(double) === 2, `${cones(double)}`)
 }
 
-console.log('\nHints: a ladder that gives away strictly more at each rung')
+console.log('\nHints: the same colour reading, handed over a rung at a time')
 {
-  const { hintsFor, hintFacelets, necessaryPieces } = await import('../src/cube/recognition.ts')
+  const { hintsFor, readTwoSided, decidingComparisons, TWO_SIDED_FACELETS } = await import(
+    '../src/cube/recognition.ts'
+  )
   const { buildDrill } = await import('../src/cube/scramble.ts')
 
   let wrongCount = 0
-  let notEscalating = 0
   let emptyText = 0
   let badHighlight = 0
-  let leaksName = 0
+  let leaksEarly = 0
+  let dishonest = 0
+  let notFinal = 0
 
   for (const oll of OLL_CASES) {
-    for (const pll of PLL_CASES.slice(0, 4)) {
-      const drill = buildDrill(oll, pll, oll.number * 13 + pll.name.length)
-      const hints = hintsFor(oll, drill.ollAlg, drill.stateAfterOLL, pll)
+    for (const pll of PLL_CASES) {
+      const drill = buildDrill(oll, pll, 3)
+      const hints = hintsFor(oll, drill.ollAlg, drill.state, pll)
+      const read = readTwoSided(oll, drill.ollAlg, drill.state)
+      const chain = decidingComparisons(oll, drill.ollAlg, drill.state)
 
       if (hints.length !== 3) wrongCount++
       if (hints.some((h) => !h.text || h.text.length < 20)) emptyText++
 
-      // Rung 1 points at pieces, rung 2 adds the arrows, rung 3 adds the shape.
-      if (hints[0].arrows || !hints[1].arrows || !hints[2].arrows) notEscalating++
+      // The first rung says where to look and nothing more. It is the one rung
+      // that has to survive being taken on a rep you still mean to answer.
+      if (PLL_CASES.some((c) => new RegExp(`\\b${c.name} perm\\b`).test(hints[0].text))) leaksEarly++
+      if (/leaves|only/i.test(hints[0].text)) leaksEarly++
 
-      // The first two rungs must never name the answer outright.
-      const named = PLL_CASES.filter((c) =>
-        new RegExp(`\\b${c.name}\\b`).test(`${hints[0].text} ${hints[1].text}`),
-      )
-      if (named.length > 0) leaksName++
+      // Anything a rung names has to still contain the true answer.
+      if (read.candidates.length <= 4 && !new RegExp(`\\b${pll.name}\\b`).test(hints[1].text)) {
+        dishonest++
+      }
 
-      // Highlights must be real, visible stickers of the pieces that decide it.
-      const lit = hintFacelets(oll, drill.ollAlg)
-      const needed = new Set(necessaryPieces(oll, drill.ollAlg).map((p) => `${p.kind}${p.slot}`))
-      if (lit.length === 0 || needed.size === 0) badHighlight++
-      if (lit.some((f) => f < 0 || f > 53)) badHighlight++
+      // The last rung finishes the job: either it names the case outright, or
+      // it hands over the comparison that does.
+      const last = hints[2].text
+      const namesIt = new RegExp(`\\b${pll.name}\\b`).test(last)
+      if (chain.length === 0 ? !namesIt : !/Compare /.test(last)) notFinal++
+
+      // Every lit sticker is one a solver can actually see right now.
+      const lit = hints.flatMap((h) => h.highlight ?? [])
+      if (lit.length === 0) badHighlight++
+      if (lit.some((f) => !TWO_SIDED_FACELETS.has(f) || oll.state[f] === 'U')) badHighlight++
     }
   }
 
   check('every case produces exactly three rungs', wrongCount === 0, `${wrongCount} did not`)
   check('every rung says something', emptyText === 0, `${emptyText} empty`)
-  check('the rungs escalate: pieces, then arrows, then the shape', notEscalating === 0, `${notEscalating} out of order`)
-  check('the first two rungs never name a PLL', leaksName === 0, `${leaksName} leaked`)
-  check('highlights point at real stickers of the deciding pieces', badHighlight === 0, `${badHighlight} bad`)
-
-  // The final rung must be honest: the case it points to has to be among the
-  // candidates it names, or the hint is worse than no hint.
-  let dishonest = 0
-  for (const oll of OLL_CASES) {
-    for (const pll of PLL_CASES) {
-      const drill = buildDrill(oll, pll, 3)
-      const last = hintsFor(oll, drill.ollAlg, drill.stateAfterOLL, pll)[2].text
-      const singular = last.includes('Exactly one case')
-      if (!singular && !new RegExp(`\\b${pll.name}\\b`).test(last)) dishonest++
-    }
-  }
-  check(
-    `the final rung always includes the true case among its candidates`,
-    dishonest === 0,
-    `${dishonest} wrong`,
-  )
+  check('the first rung says where to look and nothing more', leaksEarly === 0, `${leaksEarly} gave more`)
+  check('a named shortlist always contains the true case', dishonest === 0, `${dishonest} did not`)
+  check('the last rung either names it or hands over the comparison', notFinal === 0, `${notFinal} did not`)
+  check('every rung lights stickers you can actually see', badHighlight === 0, `${badHighlight} bad`)
 }
 
 console.log('\nThe lesson: one step, by whichever route the case rewards')

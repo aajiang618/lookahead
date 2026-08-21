@@ -1,45 +1,48 @@
+/*
+ * Four options, each carrying the case's own diagram.
+ *
+ * Four across on a laptop, two by two on a phone. The diagram is the thing
+ * being matched, so it gets the room and the name sits under it as a label
+ * rather than as the content.
+ */
+
 .pll-choices {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--gap-2);
   width: 100%;
-  max-width: 34rem;
+  max-width: 40rem;
   margin-inline: auto;
 }
 
 .pll-choices__option {
-  min-height: 3.25rem;
-  padding: 0.6rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.4rem 0.45rem;
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-strong);
-  font-size: 1.0625rem;
   font-weight: 600;
   transition:
     background-color var(--capture),
     color var(--capture);
 }
 
+.pll-choices__name {
+  font-size: 0.9375rem;
+  line-height: 1;
+}
+
 .pll-choices__option:hover:not(:disabled) {
   background: var(--surface-strong);
 }
 
-.pll-choices__option[data-state='correct'] {
-  background: var(--caution);
-  color: var(--ground-deep);
-}
-
-.pll-choices__option[data-state='wrong'] {
-  background: var(--warning);
-  color: var(--ground-deep);
-}
-
-.pll-choices__option:disabled {
-  cursor: default;
-}
-
-@media (max-width: 26rem) {
+@media (max-width: 30rem) {
   .pll-choices {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 22rem;
   }
 }

@@ -15,6 +15,7 @@
 import { useMemo } from 'react'
 import { PLL_CASES, type PLLCase } from '../cube/cases.ts'
 import { readDrill } from '../cube/recognition.ts'
+import { CaseDiagram } from './CaseDiagram.tsx'
 import type { Facelets } from '../cube/engine.ts'
 import './pll-choices.css'
 
@@ -45,19 +46,21 @@ export function pickChoices(answer: PLLCase, resolved: Facelets, seed: number): 
   return shuffle([answer, ...pool.slice(0, 3)], seed + 13)
 }
 
+/*
+ * There is deliberately no revealed/chosen state here. Answering swaps the
+ * whole ask strip out for the verdict, so these buttons never exist at the
+ * moment an answer is being shown — a `data-state` for correct and wrong was
+ * styling a thing that had already unmounted.
+ */
 export function PllChoices({
   answer,
   resolved,
   seed,
-  chosenId,
-  revealed,
   onPick,
 }: {
   answer: PLLCase
   resolved: Facelets
   seed: number
-  chosenId: string | null
-  revealed: boolean
   onPick: (id: string) => void
 }) {
   const choices = useMemo(() => pickChoices(answer, resolved, seed), [answer, resolved, seed])
@@ -65,23 +68,25 @@ export function PllChoices({
   return (
     <div className="pll-choices">
       {choices.map((c) => {
-        const state = !revealed
-          ? 'idle'
-          : c.id === answer.id
-            ? 'correct'
-            : c.id === chosenId
-              ? 'wrong'
-              : 'idle'
         return (
           <button
             key={c.id}
             type="button"
             className="pll-choices__option"
-            data-state={state}
-            disabled={revealed}
             onClick={() => onPick(c.id)}
           >
-            {c.name}
+            {/*
+              The case's own picture, arrows and all. A name is a label you have
+              to translate back into a permutation; the diagram IS the
+              permutation, and matching a shape against a shape is the operation
+              this app is trying to make fast.
+
+              It is the canonical drawing of the case at its own reference AUF,
+              not a claim about the drill on screen — the same thing an
+              algorithm sheet shows you.
+            */}
+            <CaseDiagram facelets={c.state} arrows={c.arrows} size={64} title={`${c.name} perm`} />
+            <span className="pll-choices__name">{c.name}</span>
           </button>
         )
       })}

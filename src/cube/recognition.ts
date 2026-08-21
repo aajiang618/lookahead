@@ -558,20 +558,48 @@ export interface Hint {
 }
 
 /**
- * A ladder, not a lump — and the same explanation the lesson gave.
+ * A ladder, not a lump — and it carries BOTH routes to the answer.
  *
- * A hint used to be a different account of the case from the one it was taught
- * with: pieces, then arrows, then shape. Two vocabularies for one skill is one
- * too many, so a hint is now the colour reading, handed over a rung at a time —
- * where to look, what it says, and finally the comparison that settles it.
+ * The lesson commits to one method per case, because a lesson has to leave you
+ * with a single thing to memorise. A hint is asked for at the moment the chosen
+ * method is not working, so committing again would just repeat what has already
+ * failed. So the ladder hands over the piece swaps and the colour pattern in
+ * turn, and you take whichever one makes the case fall open:
  *
- * Each rung gives away strictly more than the last, and by the last the rep has
- * already stopped counting toward pace; see `applyTrial`.
+ *   1. where to look        — the stickers that decide it, lit, and nothing said
+ *   2. how the pieces move  — the swaps, with the arcs drawn
+ *   3. what the colours say — the blocks those pieces land in, and what is left
+ *   4. the comparison       — the sticker pair that separates what remains
+ *
+ * Each rung gives away strictly more than the last. The first is the only one
+ * safe to take on a rep you still mean to answer honestly, so it may not name a
+ * case and may not say what the reading leaves; the suite holds it to that. By
+ * the last rung the rep has already stopped counting toward pace — see
+ * `applyTrial`.
  */
 export function hintsFor(oll: OLLCase, alg: string, state: Facelets, pll: PLLCase): Hint[] {
   const read = readTwoSided(oll, alg, state)
   const comparisons = decidingComparisons(oll, alg, state)
+  const map = buildRecognitionBrief(oll, alg).map
   const lit = [...read.front, ...read.right].filter((s) => s.visible).map((s) => s.from as number)
+
+  /*
+   * The frozen system first, when there is one. "Corners never move here" is
+   * not a mapping to hold in your head, it is permission to stop looking at
+   * half the cube, and it is the single most useful sentence for those cases.
+   */
+  /*
+   * Deliberately avoiding the words "only" and "leaves". The first rungs are
+   * checked for both, because those are how a shortlist gets stated out loud,
+   * and a rung meant to be safe on a rep you still intend to answer cannot be
+   * allowed to phrase itself like a conclusion. "Only twist" is innocent and
+   * would still trip it, so it says "just twist" instead.
+   */
+  const frozen = map.cornersFixed
+    ? 'The corners never travel here — they just twist, so the ones you can read now are the ones you get. '
+    : map.edgesFixed
+      ? 'The edges never travel here — the ones you can read now are the ones you get. '
+      : ''
 
   const rows: Hint[] = [
     {
@@ -579,6 +607,16 @@ export function hintsFor(oll: OLLCase, alg: string, state: Facelets, pll: PLLCas
         `Read what is about to become your front row — ${read.front.map((s) => s.where).join(', ')} — ` +
         `and your right row — ${read.right.map((s) => s.where).join(', ')}.`,
       highlight: lit,
+    },
+    {
+      /*
+       * The swaps, said as arrivals rather than departures. What matters is not
+       * where a piece goes but what ends up in the slot you are about to read,
+       * which is the question the arcs on the cube are answering too.
+       */
+      text: `${frozen}Corners ${arrivalsInto(map, 'corner')}; edges ${arrivalsInto(map, 'edge')}.`,
+      highlight: lit,
+      arrows: true,
     },
     {
       text:
@@ -610,6 +648,51 @@ export function hintsFor(oll: OLLCase, alg: string, state: Facelets, pll: PLLCas
   }
 
   return rows
+}
+
+/**
+ * Why the answer is what it is, and — when the solver picked something else —
+ * why it is not that.
+ *
+ * A verdict that only says "wrong" tells you nothing you did not already know
+ * the instant the cube resolved. What is worth saying is the one property that
+ * separates the two cases, and the separating property is chosen by CLASS
+ * rather than by appearance: an AUF changes every absolute colour in the last
+ * layer and changes no class, so the sentence stays true whichever way round
+ * the case arrived.
+ *
+ * It stops short of claiming the difference was VISIBLE from two sides. Often
+ * it was not — the six stickers settle only a third of drills alone — and
+ * telling someone they should have seen something they could not is worse than
+ * saying nothing.
+ */
+function capitalise(text: string): string {
+  return text ? text[0].toUpperCase() + text.slice(1) : text
+}
+
+export function explainMiss(resolved: Facelets, actual: PLLCase, chosen: PLLCase | null): string {
+  const landed = landedBlocks(resolved)
+  const shown = capitalise(
+    [
+      landed.front ? `front ${BLOCK_READING[landed.front]}` : null,
+      landed.right ? `right ${BLOCK_READING[landed.right]}` : null,
+    ]
+      .filter(Boolean)
+      .join(', '),
+  )
+
+  if (!chosen || chosen.id === actual.id) return `${shown} — ${actual.name}.`
+
+  const here = classesOfPll(actual)
+  const theirs = classesOfPll(chosen)
+
+  if (here.corners !== theirs.corners) {
+    return `${shown} — ${actual.name}, which has ${CORNER_CLASS_LABEL[here.corners]}. ${chosen.name} has ${CORNER_CLASS_LABEL[theirs.corners]}, so the corners are what tell them apart.`
+  }
+  if (here.edges !== theirs.edges) {
+    return `${shown} — ${actual.name}. Its corners do match ${chosen.name}; the edges are what differ, ${EDGE_CLASS_LABEL[here.edges]} here against ${EDGE_CLASS_LABEL[theirs.edges]}.`
+  }
+  return `${shown} — ${actual.name}. ${chosen.name} shares its corner and edge pattern exactly, so nothing on the front and right separates the two: this pair needs a top sticker.`
 }
 
 // ---------------------------------------------------------------------------

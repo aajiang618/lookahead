@@ -75,7 +75,12 @@
 
 .case-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 3.5rem 4rem 3rem;
+  /*
+   * Diagram, name, pace, seams, hit rate, last seen. The reps column went: a
+   * rep count and a seam count answer the same question, and only one of them
+   * answers it honestly.
+   */
+  grid-template-columns: auto minmax(0, 1fr) 3.5rem 3.5rem 3rem 4.5rem;
   align-items: center;
   gap: var(--gap-3);
   width: 100%;
@@ -124,11 +129,29 @@
 }
 
 .case-row__pace,
-.case-row__reps,
-.case-row__hit {
+.case-row__seams,
+.case-row__hit,
+.case-row__seen {
   font-size: 0.75rem;
   color: var(--ink-dim);
   text-align: right;
+}
+
+/* Reviewed today is the one state worth catching the eye. */
+.case-row__seen[data-today='true'] {
+  color: var(--caution);
+  font-weight: 600;
+}
+
+/*
+ * Amber sits at 5:1 on the list's white ground but only 4.27 once the row is
+ * selected or hovered — measured. The weight carries the emphasis on those
+ * rows instead, so the marker never dips under the floor on the row being
+ * looked at.
+ */
+.case-row:hover .case-row__seen[data-today='true'],
+.case-row[data-selected='true'] .case-row__seen[data-today='true'] {
+  color: var(--ink-strong);
 }
 
 .case-row[data-status='automatic'] .case-row__pace {
@@ -259,6 +282,44 @@
   color: var(--ink-strong);
   overflow-wrap: anywhere;
   user-select: all;
+}
+
+/*
+ * The twenty-one outcomes of one case, met and unmet.
+ *
+ * Small enough that all of them fit without scrolling, because the useful thing
+ * is the SHAPE of the gap — a case with three unseen outcomes and a case with
+ * fifteen are different situations, and a number alone flattens them.
+ */
+.case-detail__seams {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+  gap: var(--gap-2);
+}
+
+.case-detail__seam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.case-detail__seam b {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+}
+
+/* Never met: present, and plainly not yet done. */
+.case-detail__seam[data-seen='false'] {
+  opacity: 0.28;
+}
+
+.case-detail__seam[data-seen='true'] b {
+  color: var(--caution);
 }
 
 .case-detail__actions {

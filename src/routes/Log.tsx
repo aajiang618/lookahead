@@ -109,17 +109,27 @@ export function Log({ session }: { session: Session }) {
             </select>
           </label>
 
+          {/*
+            "Answering" used to choose between four options and reveal-and-
+            self-grade. Self-grading is gone: it measured whether you would
+            admit to a miss rather than whether you had one, and a four-option
+            test answers the same question without asking anyone to be honest
+            under time pressure.
+          */}
           <label className="log__setting">
-            <span className="label">Answering</span>
+            <span className="label">Real cube</span>
             <select
-              value={settings.answerMode}
-              onChange={(e) =>
-                session.updateSettings({ answerMode: e.target.value as 'choices' | 'reveal' })
-              }
+              value={settings.setupFirst ? 'yes' : 'no'}
+              onChange={(e) => session.updateSettings({ setupFirst: e.target.value === 'yes' })}
             >
-              <option value="choices">Pick from four</option>
-              <option value="reveal">Reveal and self-grade</option>
+              <option value="no">Off — the cube is on screen</option>
+              <option value="yes">On — scramble first, tap when set up</option>
             </select>
+            <span className="log__hint">
+              With a cube in hand, the scramble is shown alone and the clock starts on the
+              tap. Setting a case up physically is not recognition and must not be timed as
+              though it were.
+            </span>
           </label>
 
           <label className="log__setting">

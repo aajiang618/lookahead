@@ -114,21 +114,32 @@ The cube's turn animation is cubic ease-out, matching a well-tensioned puzzle.
 
 ## Surfaces
 
-Three tabs: **Train**, **Cases**, **Log**.
+**Three tabs on a bottom bar, icons only** (Heroicons outline, inlined — a
+handful of paths do not justify a dependency and the offline build must not
+fetch). Train, Cases, Log. On a phone the bar is fixed to the bottom where a
+thumb already is, and the main area pads itself so the drill's strip never
+slides under it. On a laptop the same strip sits in the header.
 
-**Four tabs on a bottom bar, icons only** (Heroicons outline, inlined — four
-paths do not justify a dependency and the offline build must not fetch). Home is
-the day; Train is the timed test, one tap and straight in; Cases; Log. On a
-phone the bar is fixed to the bottom where a thumb already is, and the main
-area pads itself so the drill's strip never slides under it. On a laptop the
-same strip sits in the header.
+**Home is gone, and Today with it.** There were four tabs and the first was a
+card that decided your day: what was due, how many new cases you were allowed,
+a progress bar toward 57. Every part of it rested on the app knowing better than
+the solver which cases they should be looking at, and it does not. Train now
+opens on the selection, which is the only question the app needs answered before
+it can start.
 
-**Home is one card.** Today is the whole plan — review of what is due, then new
-material as the gate allows — so splitting it into more cards was giving names
-to parts of one thing. The card shows the OLLs currently being learned as
-diagrams, because a shape is recognised faster than a number, which is rather
-the point of this app. Under it, a progress bar: n of 57 automatic. The practice
-grid tiles carry each case's diagram as the icon, for the same reason.
+**The selection is all 57, grouped by shape family.** Dot, Fish, Lightning — the
+names cubers already use, so selecting a meaningful batch is one press rather
+than six. Every tile carries its own diagram, because a shape is recognised
+faster than a numeral, which is rather the point of this app. Nothing is locked:
+a case exists the moment it is chosen. The selection lives in settings rather
+than in the URL — a 57-case set does not belong in a hash — so it survives a
+reload and comes back next session.
+
+**Tiles count seams, not reps.** A tile says `7/21`, or `new`. One OLL leaves 21
+PLLs and each pairing is its own thing to recognise, so a rep count flatters:
+twenty reps of one case can mean five of its twenty-one outcomes. The header
+counts the same way, `n of 1197 seams seen`, because that is the honest size of
+the thing being learned.
 
 **The lesson is one sentence, and it leads with the thing to memorise.**
 "Front a 2-bar, right no block — Gb, sharing it with Ga, Gc or Gd. Separate them
@@ -143,18 +154,16 @@ drawn from the same joint corner/edge classification the rest of the app uses,
 and then hands over the comparison that separates them. A recognition rule that
 is false four times in ten is worse than none.
 
-**The timed test shows the scramble alone, full screen, until you tap.** The
-clock starts on the tap, not when the trial was built, because setting a case up
-on a real cube is not recognition and must not be timed as though it were. The
-panel is the tap target — you should not have to aim while holding a cube — and
-the case picker is layered on it, since "which cases am I being tested on" is a
-question you ask there and nowhere else.
+**"Real cube" shows the scramble alone, full screen, until you tap.** The clock
+starts on the tap, not when the trial was built, because setting a case up in
+your hands is not recognition and must not be timed as though it were. The panel
+is the tap target — you should not have to aim while holding a cube.
 
-**Four options, not twenty-one.** Finding a name in a grid of twenty-one is a
-search, and search time contaminates a recognition measurement. The three wrong
-answers are drawn from the cases that genuinely look like the right one — same
-corner and edge classes first, then the same family — because a distractor you
-could rule out without looking at the cube makes the test easier than the skill.
+It is a setting, off by default, where it used to be what the timed test always
+did. With one training mode rather than five, the gate would otherwise cost a
+tap on every rep of a session done entirely on screen — and most are. The case
+picker that used to be layered on this screen has gone to its own page, which is
+where the session now starts anyway.
 
 **Teach once, then test — and the teaching is step by step.** A case's
 introduction used to be four readings of one sentence in a row, which is copying
@@ -167,19 +176,28 @@ stays in the eye while the words build on it. The rest of the introduction, and
 review, test with four options, and every answer carries the reading step's own
 sentence.
 
-**Four options is the answering surface everywhere** a rep is a test.
-Reveal-and-self-grade survives in settings for anyone who would rather say the
-answer out loud, but it cannot be the default: a session that teaches a case and
-then asks you to grade yourself on it never checks whether you knew it. The
-21-cell grid is gone.
+**Four options is the answering surface everywhere** a rep is a test. The
+21-cell grid is gone, and so is reveal-and-self-grade: it measured whether a
+solver would admit to a miss rather than whether they had one, and a four-option
+test answers the same question without asking anyone to be honest under time
+pressure. A session that teaches a case and then asks you to grade yourself on
+it never actually checks whether you knew it.
 
-**Version 3 of the store resets learning state on load.** Twice now the lessons
-have changed enough that progress earned against the old ones would grade the
-new material as already known. Settings survive the reset — with one exception
-that has bitten twice: a **superseded default is not a preference**. `reveal`
-was the old default answering mode, so carrying it forward would have meant
-nobody ever saw the four options, exactly as the old cube zoom would have kept
-the cube framed tight.
+**Version 5 of the store resets learning state on load.** The largest reset yet:
+the app no longer decides what you train, so phases, streaks and due dates earned
+under a curriculum that unlocked cases on your behalf describe a schedule that
+does not exist. Settings survive — with one exception that has now bitten four
+times: a **superseded default is not a preference**. `reveal` was the old default
+answering mode, `varyAngle` the old default camera, and the old cube zoom would
+have kept the cube framed tight; each would have silently disabled the thing that
+replaced it.
+
+The migration carries one thing forward deliberately. The timed test's case
+picker is the direct ancestor of the training selection, so a chosen set becomes
+`trainCases` rather than being emptied — and it tests for length rather than for
+presence, because the value being migrated from is usually an empty array and
+`??` treats `[]` as a real answer. That bug was caught by the suite, not by
+reading the code.
 
 **The hidden attribute always wins** (`[hidden] { display: none !important }`).
 Its UA style is a plain `display: none`, which any authored `display: flex` on
@@ -291,15 +309,16 @@ the joint corner/edge classification instead, which is exact.
 
 ## A new case teaches before it tests
 
-The four introducing reps of a case carry the method on screen, and the hint
-ladder is withheld until they are done.
+The FIRST rep of a case you have never trained carries the method on screen,
+and the hint ladder is withheld until it is done. Exactly one rep: it used to be
+four, of which three showed a lesson nobody was still reading, and those three
+were spent without ever counting toward anything.
 
-**One step, not three.** The lesson used to walk the front row, the right row
-and the deciding comparison in sequence — three presses and three things to hold
-before the cube was ever answered. What survives is the shortest true statement
-of the method, with the conclusion kept back for the reveal. The suite enforces
-it: two steps, method then answer, and no lesson longer than 260 characters,
-because the strip it lives in is a fixed height.
+**Three steps, then the answer.** The lesson walks the whole case, then the
+stickers that will not move, then what the colours reveal — and the conclusion
+lands with the revealed cube. The suite enforces the shape: four steps in order,
+none of them thin, and no step longer than 260 characters, because the strip it
+lives in is a fixed height.
 
 **Which method depends on the case, and the bar for leaving the colours is
 high.** Reading and following pieces are not equally good to *memorise*: a
@@ -312,8 +331,8 @@ The exception is not "reading is expensive here" — it is "there is nothing to 
 here at all". When an algorithm freezes a whole system, the corners or edges you
 can already see are the ones you will be left with, and that is not a mapping to
 memorise, it is permission to skip half the problem. Zero work beats cheap work.
-**Twelve of the 57 never move a corner and five never move an edge; those
-seventeen follow the pieces and the other forty read the colours.**
+**Fourteen of the 57 freeze a whole system and follow the pieces; the other
+forty-three read the colours.**
 
 Both costs are still measured and still recorded on the choice, because they are
 what the wording of the lesson is built from.
@@ -326,16 +345,25 @@ phone the first time a case appears.
 
 The cube must not change size when the answer appears, so the bottom strip
 reserves the height of its **taller** branch — the ask, which carries the
-scramble, the hint line and the aids row. Those numbers are measured in a
-browser rather than estimated: 223px on a laptop and 258px at 375px wide for an
-ordinary rep, more for a rep carrying a lesson.
+scramble, the hint line and the four options. Those numbers are measured in a
+browser rather than estimated: **239px of content on a laptop and 345px at 375px
+wide**, giving reservations of 17rem and 23.25rem.
 
-This broke once and is worth remembering. Making the type plainer grew the ask
-strip past a reservation that had been right for months, and the cube began
-growing 55px on every reveal. It survived a verification pass because the rep
-being measured happened to be a *teaching* rep, which reserves its own larger
-height — the check confirmed the case that was fine and never exercised the one
-that wasn't.
+This has now gone stale five times, each time because the strip's content grew.
+Most recently the options gained a diagram each and the hint box grew to fit the
+longest rung, and the cube began growing 15px on every reveal on a phone. It is
+measured on both viewports, on both branches, every time.
+
+The same discipline caught a second thing. The hint box hides its overflow, and
+at its old height the two longest rungs — 138 characters for "where to look" and
+165 for the piece swaps — were being silently clipped on a phone, losing the line
+that names the right row. The box is sized to the longest rung any case
+produces, computed across all 1,197 drills rather than eyeballed.
+
+An earlier failure is worth keeping in mind: a verification pass once confirmed
+this was fine because the rep being measured happened to be a *teaching* rep,
+which reserves its own larger height. The check confirmed the case that was fine
+and never exercised the one that wasn't.
 
 ## A way out
 
@@ -373,28 +401,49 @@ lives in localStorage. There is no server state to be stale about.
 It was near-black, which on a white page turned a dot case into eight black
 squares — the cube looked switched off rather than unsolved.
 
-## A hint is the lesson, one rung at a time
+## A hint carries both routes, one rung at a time
 
 A hint used to be a different account of the case from the one it was taught
 with — pieces, then arrows, then shape — while the lesson spoke in colours. Two
-vocabularies for one skill is one too many. A hint is now the colour reading
-handed over in three rungs: where to look, what it says, and the comparison that
-settles it. The first rung is the only one safe to take on a rep you still mean
-to answer, and the suite holds it to that: it may not name a case and may not
-say what the reading leaves.
+vocabularies for one skill is one too many, so a hint became the colour reading
+alone.
+
+That was one correction too far. The lesson commits to a single method per case,
+because a lesson has to leave you with one thing to memorise; but a hint is asked
+for at exactly the moment that method is not working, and answering with the same
+method again is no help at all. So the ladder carries **both routes**, in four
+rungs: where to look, how the pieces move, what the colours say, and the
+comparison that settles it.
+
+The first two are mechanism — true of the case before any particular drill of it
+— and the suite holds both to the same bar: neither may name a case, and neither
+may say what the reading leaves. That check earned its keep immediately, catching
+the word "only" in "only twist", which is innocent but phrased exactly like a
+conclusion; the rung says "just twist" instead.
+
+**The two aids are icons at the cube's edge.** They were labelled buttons in the
+bottom strip, in the middle of the line you read every rep. You reach for them
+while looking at the cube, so they sit beside it, and they are absolutely
+positioned so that showing or hiding them cannot change the strip's height.
 
 ## Hints hold the layout still
 
-Only the newest rung renders, in a box of fixed height. Stacking all three grew
-the bottom strip and shrank the cube by 90px as you asked for help — the one
-moment the view should be perfectly still. Each rung supersedes the last, so
-nothing is lost by showing one.
+Only the newest rung renders, in a box of fixed height. Stacking them grew the
+bottom strip and shrank the cube by 90px as you asked for help — the one moment
+the view should be perfectly still. Each rung supersedes the last, so nothing is
+lost by showing one. The box is sized to the longest rung any of the 57 cases
+produces, because it hides its overflow and a box that silently clips a hint is
+worse than one that never offered it.
 
 ## Rules that are product decisions, not style
 
-- **The answer grid never reorders.** A grid that reshuffles must be searched,
-  and search time contaminates a recognition measurement. Held fixed, it
-  becomes spatial memory and drops out of the timing.
+- **Four options are shuffled; twenty-one were not.** The old 21-cell grid was
+  held in fixed positions forever, because a grid that reshuffles must be
+  searched and search time contaminates a recognition measurement. Four options
+  are read at a glance rather than searched, so the argument inverts: fixed
+  positions would let a solver learn where the answer tends to sit. The shuffle
+  is seeded from the drill, so it is stable across a re-render and never moves
+  under the pointer.
 - **The canvas CSS size is pinned to its container.** `setSize(w, h, false)`
   updates the drawing buffer but not the CSS box, so an unpinned canvas lays
   out at its attribute size and grows its own parent.
@@ -426,17 +475,25 @@ filled variant (`primary`, amber) and it is the thing you press to go on.
 needs grouping.
 
 `CaseDiagram` renders the flat top-down case notation every algorithm sheet has
-used for decades. `CubeView3D` is the interactive cube. `PllGrid` is the answer
-surface.
+used for decades — and it now does most of the work in the app, as the tile on
+the selection screen, the row marker in Cases, the seam map, and the face of each
+of the four answer options. `CubeView3D` is the interactive cube. `PllChoices` is
+the answer surface.
 
 ## Accessibility
 
-- Keyboard-first: the whole drill loop plays without a mouse. Type a case name
-  to answer; `Space` advances; `F`/`J` self-grade.
+- Keyboard-first: the whole drill loop plays without a mouse. `Space` advances
+  and steps the lesson, `H` takes a hint, `A` toggles the arrows, `Esc` leaves.
 - Focus is a 2px amber outline with offset, rounded to match whatever it lands
   on.
-- Correctness is never colour-only: the grid answer box and the verdict text
-  both carry it.
+- Correctness is never colour-only: the verdict is the words *Correct* or
+  *Incorrect*, not a colour on a tile.
+- Every contrast in this document is measured in a browser, not derived. Two
+  failures found that way: `--ink-faint` on the selection tiles at 2.1:1, and
+  amber-on-amber at 3.6:1 wherever an accent-tinted ground carried accent text.
+  `color-mix` interpolates in oklab, so reasoning about the sRGB blend gives the
+  wrong answer by a quarter of a point — which is exactly the margin these
+  failures sat in.
 - Body text meets 4.5:1; `--ink-faint` is barred from text by contract.
 - A skip link precedes the header.
 - The 3D cube is `aria-hidden`; the case is also carried by a titled 2D diagram.

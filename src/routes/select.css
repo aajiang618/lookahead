@@ -1,0 +1,197 @@
+/*
+ * Choosing what to train.
+ *
+ * A long grid with a start control pinned to the bottom. No borders anywhere —
+ * a selected tile is marked by a filled surface and its diagram coming forward,
+ * which is how the rest of the app separates regions too.
+ */
+
+.select {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem calc(6rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.select__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.select__title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.select__sub {
+  margin: 0;
+  color: var(--ink-dim);
+}
+
+.select__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.select__bulk-item {
+  padding: 0.4rem 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+
+.select__bulk-item:hover {
+  background: var(--surface-strong);
+}
+
+.select__bulk-item[data-on='true'] {
+  background: var(--caution);
+  color: var(--ground-deep);
+}
+
+.select__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.select__group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.select__group-head i {
+  font-style: normal;
+  color: var(--ink-dim);
+}
+
+.select__group-head:hover {
+  color: var(--caution);
+}
+
+/*
+ * Explicit column sizing. An implicit `auto` track adopts its content's
+ * min-content width, which is how a grid of fixed-size diagrams quietly ends up
+ * wider than the phone it is on.
+ */
+.select__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr));
+  gap: 0.5rem;
+}
+
+.select__case {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.6rem 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--capture);
+}
+
+.select__case:hover {
+  background: var(--surface-strong);
+}
+
+.select__case[data-on='true'] {
+  background: color-mix(in srgb, var(--caution) 14%, transparent);
+}
+
+.select__case b {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/*
+ * A selected tile is marked by its filled ground and nothing else.
+ *
+ * The number used to turn amber as well, which put --caution text on a
+ * caution-tinted background: 3.64:1, under the 4.5 floor. The tint already says
+ * "selected", and aria-pressed says it to a screen reader, so the second signal
+ * was costing legibility to repeat something.
+ */
+
+.select__seams {
+  font-size: 0.6875rem;
+  font-style: normal;
+  color: var(--ink-dim);
+}
+
+/*
+ * "new" is information, not decoration, so it sits at --ink-dim like every
+ * other readable caption. It was --ink-faint, which reads at 2.1:1 and is
+ * barred from text by contract for exactly that reason — the word a solver most
+ * wants to spot was the least legible thing on the tile.
+ */
+.select__case[data-status='automatic'] .select__seams {
+  color: var(--caution);
+}
+
+/*
+ * Under the pointer, or once chosen, the caption goes to full ink.
+ *
+ * --ink-dim is the floor for readable text — 6.4:1 on white, and still 4.86 on
+ * the tile's ordinary surface. On the HOVER surface it measures 4.43, just
+ * under the 4.5 bar, which is the sort of thing only measurement catches: the
+ * text gets harder to read at precisely the moment a pointer says someone is
+ * reading it. Full ink on both states, and the hierarchy only loosens on the
+ * one tile being attended to.
+ */
+.select__case:hover .select__seams,
+.select__case[data-on='true'] .select__seams {
+  color: var(--ink);
+}
+
+.select__go {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--ground) 62%, transparent);
+  pointer-events: none;
+}
+
+.select__go > * {
+  pointer-events: auto;
+  min-width: 12rem;
+}
+
+/*
+ * On a phone the tab bar is already fixed to the bottom, so the start control
+ * sits above it rather than under it.
+ */
+@media (max-width: 44rem) {
+  .select__go {
+    bottom: calc(3.6rem + env(safe-area-inset-bottom));
+    padding-bottom: 0.75rem;
+  }
+}

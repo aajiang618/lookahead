@@ -8,13 +8,17 @@ import { DEFAULT_MOTOR_SECONDS } from './latency.ts'
 
 export const STORAGE_KEY = 'lookahead.progress.v1'
 /**
- * Bumping this resets learning state on load, keeping settings. Done twice
- * now, both times because the lessons changed enough that progress earned
- * against the old ones would grade the new material as already known:
- * version 2 for the colour reading, version 3 for pattern-first teaching with
- * multiple choice throughout.
+ * Bumping this resets learning state on load, keeping settings. Done three
+ * times now: version 2 for the colour reading, version 3 for pattern-first
+ * teaching with multiple choice throughout, version 4 for the camera fix.
+ *
+ * Version 5 is the largest of them. The app no longer decides what you train —
+ * you pick the OLLs — so the phases, streaks and due dates earned under a
+ * curriculum that unlocked cases on your behalf describe a schedule that no
+ * longer exists. Carrying them forward would show cases as automatic on the
+ * strength of reps the new model never counted the same way.
  */
-export const SCHEMA_VERSION = 4
+export const SCHEMA_VERSION = 5
 
 export type ItemPhase = 'locked' | 'introducing' | 'building' | 'maintenance'
 export type LeechKind = 'none' | 'accuracy' | 'fluency'
@@ -75,6 +79,18 @@ export interface ItemProgress {
   recent: TrialRecord[]
   /** Distinct session ids the recent trials span. */
   sessionsSeen: string[]
+  /**
+   * Every PLL this OLL has actually left you, by id.
+   *
+   * The unit of recognition here is the SEAM — one OLL leaving one PLL — not
+   * the OLL on its own. There are 1,197 of them and each is its own thing to
+   * recognise, so "I have trained OLL 21" says much less than it sounds like:
+   * you may have met four of its twenty-one outcomes. This is what makes a rep
+   * honestly new, and what the drill prefers when choosing what to show.
+   */
+  seenPlls: string[]
+  /** When this case was last put in front of the solver. */
+  lastSeenAt: number | null
   leech: LeechKind
   introducedAt: number | null
   masteredAt: number | null
@@ -95,12 +111,6 @@ export interface Settings {
   /** Target session length in seconds. */
   sessionSeconds: number
   /**
-   * How a rep is answered. `choices` is four options; `reveal` shows the answer
-   * and asks you to grade yourself, which measures honesty rather than
-   * recognition and is therefore not the default.
-   */
-  answerMode: 'choices' | 'reveal'
-  /**
    * Rotate the camera between reps.
    *
    * Off, and it should stay off. Fourteen of the 57 OLL top shapes repeat under
@@ -112,7 +122,6 @@ export interface Settings {
   varyAngle: boolean
   varyAuf: boolean
   reduceMotion: boolean
-  showFeatureOverlay: boolean
   /** Measured cost of physically committing an answer, in seconds. */
   motorSeconds: number
   motorCalibrated: boolean
@@ -130,10 +139,19 @@ export interface Settings {
    * last layer is read at a glance rather than inspected.
    */
   /**
-   * Which OLLs the timed test draws from, by case id. Empty means everything
-   * unlocked — the common case, and the one that needs no explaining.
+   * Which OLLs you are training, by case id. This is the whole plan now: there
+   * is no schedule choosing for you, so an empty selection means the drill has
+   * nothing to draw on rather than "everything".
    */
-  testCases: string[]
+  trainCases: string[]
+  /**
+   * Show the scramble alone, full screen, and start the clock only when you tap.
+   *
+   * For training with a real cube in hand. Setting a case up physically is not
+   * recognition and must not be timed as though it were — but it is a tap per
+   * rep, so it is off unless you are actually holding a cube.
+   */
+  setupFirst: boolean
   cubeZoom: number
   /** Drill prediction from part-way through the algorithm, as a move count. */
   headStart: number
@@ -154,15 +172,14 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   sessionSeconds: 300,
-  answerMode: 'choices',
   varyAngle: false,
   varyAuf: true,
   reduceMotion: false,
-  showFeatureOverlay: true,
   motorSeconds: DEFAULT_MOTOR_SECONDS,
   motorCalibrated: false,
   algChoice: {},
-  testCases: [],
+  trainCases: [],
+  setupFirst: false,
   cubeZoom: 0.7,
   headStart: 0,
   repsPerExercise: 4,
@@ -242,6 +259,8 @@ export function newItem(id: string): ItemProgress {
     paceSessions: [],
     recent: [],
     sessionsSeen: [],
+    seenPlls: [],
+    lastSeenAt: null,
     leech: 'none',
     introducedAt: null,
     masteredAt: null,
@@ -320,24 +339,41 @@ export function saveProgress(progress: Progress): void {
  */
 const PREVIOUS_DEFAULT_ZOOMS = [1.05, 0.82]
 
+/** Settings that no longer exist, so an old profile cannot smuggle them back. */
+interface LegacySettings {
+  /** The old timed test's case selection — the ancestor of `trainCases`. */
+  testCases?: string[]
+  answerMode?: string
+}
+
 function migrate(progress: Progress): Progress {
   const base = emptyProgress()
-  const settings = {
+  const stored = (progress.settings ?? {}) as Partial<Settings> & LegacySettings
+  const settings: Settings = {
     ...base.settings,
-    ...progress.settings,
-    algChoice: progress.settings?.algChoice ?? {},
-    testCases: progress.settings?.testCases ?? [],
+    ...(stored as Partial<Settings>),
+    algChoice: stored.algChoice ?? {},
+    /*
+     * The timed test's picker is the direct ancestor of the training selection,
+     * so a solver who had chosen a set keeps it rather than arriving at an empty
+     * screen wondering where their cases went.
+     *
+     * Length rather than `??`, because the value being migrated from is very
+     * often an empty array rather than a missing key — nullish coalescing sees
+     * `[]` as a real answer and would drop the selection on exactly the
+     * profiles this clause exists to rescue.
+     */
+    trainCases: stored.trainCases?.length ? stored.trainCases : (stored.testCases ?? []),
   }
+  // Fields that no longer exist must not survive a spread from an old profile.
+  delete (settings as Partial<LegacySettings>).testCases
+  delete (settings as Partial<LegacySettings>).answerMode
+
   if (PREVIOUS_DEFAULT_ZOOMS.includes(settings.cubeZoom)) settings.cubeZoom = base.settings.cubeZoom
   if ((progress.version ?? 1) < SCHEMA_VERSION) {
-    /*
-     * `reveal` used to be the default answering mode, so every profile carries
-     * it whether or not anyone chose it — and carrying it forward would mean
-     * nobody ever saw the four options. Same trap as the cube zoom: a
-     * superseded default is not a preference.
-     */
-    if (settings.answerMode === 'reveal') settings.answerMode = base.settings.answerMode
-    // Same reason: it was the old default, and it makes some drills ambiguous.
+    // A superseded default is not a preference — the trap that has bitten this
+    // migration three times. It was the old default and it makes some drills
+    // genuinely ambiguous, so it resets whatever the old profile said.
     settings.varyAngle = base.settings.varyAngle
     return { ...base, settings }
   }
@@ -346,7 +382,14 @@ function migrate(progress: Progress): Progress {
     ...progress,
     version: SCHEMA_VERSION,
     settings,
-    items: progress.items ?? {},
+    // Items predate `seenPlls`, and an item missing it would crash the seam
+    // check on the very first rep.
+    items: Object.fromEntries(
+      Object.entries(progress.items ?? {}).map(([id, item]) => [
+        id,
+        { ...newItem(id), ...item, seenPlls: item.seenPlls ?? [], lastSeenAt: item.lastSeenAt ?? null },
+      ]),
+    ),
     logRtWindow: progress.logRtWindow ?? [],
     sessions: progress.sessions ?? [],
     newByDay: progress.newByDay ?? {},

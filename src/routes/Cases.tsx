@@ -6,7 +6,7 @@
  * the detail: the cube in that state, the scramble to set it up on a real cube,
  * which algorithm you use for it, and what to look for.
  *
- * The algorithm picker is not a preference. 28 of the 57 cases have published
+ * The algorithm picker is not a preference. 26 of the 57 cases have published
  * algorithms that leave a DIFFERENT PLL, so the trainer can only be right about
  * a case if it knows which one you actually execute.
  */
@@ -62,20 +62,44 @@ interface Row {
   hitRate: number | null
   pace: number | null
   status: 'locked' | 'learning' | 'automatic'
+  /** Distinct PLLs this OLL has actually left, of 21. */
+  seams: number
+  /** Days since this case was last put in front of the solver. */
+  lastSeenDays: number | null
+}
+
+/**
+ * How long ago, said the way a person would.
+ *
+ * A date is not the question being asked here — "have I done this one lately"
+ * is — so the answer is a distance rather than a point.
+ */
+function agoWords(days: number | null): string {
+  if (days === null) return ''
+  if (days <= 0) return 'today'
+  if (days === 1) return 'yesterday'
+  if (days < 7) return `${days}d ago`
+  if (days < 30) return `${Math.round(days / 7)}w ago`
+  return `${Math.round(days / 30)}mo ago`
 }
 
 export function Cases({
   session,
   selectedId,
   onSelect,
+  onTrain,
 }: {
   session: Session
   /** The case in the URL, or null for the list on its own. */
   selectedId: string | null
   onSelect: (id: string | null) => void
+  /** Start a session on this one case, replacing the current selection. */
+  onTrain: (ollId: string) => void
 }) {
   const { progress, threshold, settings } = session
-  const [filter, setFilter] = useState<'all' | 'learning' | 'automatic' | 'locked'>('all')
+  const [filter, setFilter] = useState<'all' | 'learning' | 'automatic' | 'locked' | 'reviewed'>(
+    'all',
+  )
 
   /*
    * Below this width the list and the detail are separate pages rather than two
@@ -106,12 +130,22 @@ export function Cases({
               : item && item.phase !== 'locked'
                 ? 'learning'
                 : 'locked',
+          seams: item?.seenPlls.length ?? 0,
+          lastSeenDays: item?.lastSeenAt
+            ? Math.floor((Date.now() - item.lastSeenAt) / 86400000)
+            : null,
         }
       }),
     [progress.items],
   )
 
-  const shown = rows.filter((r) => filter === 'all' || r.status === filter)
+  const shown = rows.filter((r) =>
+    filter === 'all'
+      ? true
+      : filter === 'reviewed'
+        ? r.lastSeenDays !== null && r.lastSeenDays <= 0
+        : r.status === filter,
+  )
   const selected = selectedId ? (rows.find((r) => r.oll.id === selectedId) ?? null) : null
   // Wide enough for both, so something is always in the detail pane.
   const detail = selected ?? (narrow ? null : rows[0])
@@ -136,7 +170,7 @@ export function Cases({
             <Count label="Not started" value={counts.locked} />
           </div>
           <div className="cases__filter" role="tablist" aria-label="Filter cases">
-            {(['all', 'learning', 'automatic', 'locked'] as const).map((f) => (
+            {(['all', 'reviewed', 'learning', 'automatic', 'locked'] as const).map((f) => (
               <button
                 key={f}
                 type="button"
@@ -146,7 +180,7 @@ export function Cases({
                 data-active={filter === f}
                 onClick={() => setFilter(f)}
               >
-                {f === 'locked' ? 'Not started' : f}
+                {f === 'locked' ? 'Not started' : f === 'reviewed' ? 'Today' : f}
               </button>
             ))}
           </div>
@@ -162,7 +196,7 @@ export function Cases({
                 data-selected={row.oll.id === selectedId}
                 onClick={() => onSelect(row.oll.id)}
               >
-                <CaseDiagram facelets={row.oll.state} mode="orientation" size={38} />
+                <CaseDiagram facelets={row.oll.state} mode="orientation" size={46} />
                 <span className="case-row__name">
                   {row.oll.name}
                   <i className="case-row__group">{row.oll.group}</i>
@@ -170,11 +204,18 @@ export function Cases({
                 <span className="case-row__pace readout">
                   {row.pace ? `${row.pace.toFixed(2)}s` : '—'}
                 </span>
-                <span className="case-row__reps readout">
-                  {row.reps > 0 ? `${row.reps} rep${row.reps === 1 ? '' : 's'}` : ''}
+                {/*
+                  Seams, not reps. Twenty reps of one OLL can mean five of its
+                  twenty-one outcomes, and a rep count hides exactly that.
+                */}
+                <span className="case-row__seams readout" title="Outcomes of this case you have seen">
+                  {row.seams > 0 ? `${row.seams}/${PLL_CASES.length}` : ''}
                 </span>
                 <span className="case-row__hit readout">
                   {row.hitRate === null ? '' : `${Math.round(row.hitRate * 100)}%`}
+                </span>
+                <span className="case-row__seen readout" data-today={row.lastSeenDays === 0}>
+                  {agoWords(row.lastSeenDays)}
                 </span>
               </button>
             </li>
@@ -188,6 +229,7 @@ export function Cases({
           session={session}
           threshold={threshold}
           settings={settings}
+          onTrain={onTrain}
           onBack={narrow ? () => onSelect(null) : null}
         />
       )}
@@ -213,12 +255,14 @@ function CaseDetail({
   session,
   threshold,
   settings,
+  onTrain,
   onBack,
 }: {
   row: Row
   session: Session
   threshold: number
   settings: Session['settings']
+  onTrain: (ollId: string) => void
   /** Set when the detail is its own page and needs a way back to the list. */
   onBack: (() => void) | null
 }) {
@@ -303,8 +347,43 @@ function CaseDetail({
           <Stat label="Recognition" value={row.pace ? `${row.pace.toFixed(2)}s` : '—'} />
           <Stat label="Reps" value={String(row.reps)} />
           <Stat label="Hit rate" value={row.hitRate === null ? '—' : `${Math.round(row.hitRate * 100)}%`} />
-          <Stat label="Streak" value={String(item?.streak ?? 0)} />
+          <Stat label="Last seen" value={row.lastSeenDays === null ? '—' : agoWords(row.lastSeenDays)} />
         </dl>
+
+        {/*
+          Which of this case's twenty-one outcomes you have actually met.
+          "Reviewed" is not a property of an OLL — it is a property of each seam,
+          and a case can be well drilled and still hold outcomes you have never
+          once seen. This is the only honest picture of that.
+        */}
+        <section className="case-detail__block">
+          <span className="label">
+            Outcomes seen · {row.seams} of {PLL_CASES.length}
+          </span>
+          <ul className="case-detail__seams">
+            {PLL_CASES.map((p) => {
+              const seen = item?.seenPlls.includes(p.id) ?? false
+              return (
+                <li key={p.id}>
+                  <span
+                    className="case-detail__seam"
+                    data-seen={seen}
+                    title={`${p.name} perm — ${seen ? 'seen' : 'not yet seen'}`}
+                  >
+                    <CaseDiagram facelets={p.state} arrows={p.arrows} size={34} />
+                    <b>{p.name}</b>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+
+        <div className="case-detail__actions">
+          <Action variant="primary" onClick={() => onTrain(oll.id)}>
+            Train this case
+          </Action>
+        </div>
 
         {mastery && row.status === 'learning' && (
           <div className="case-detail__mastery">

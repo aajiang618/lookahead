@@ -85,7 +85,7 @@ export interface BuildOptions {
   varyAuf?: boolean
   /**
    * The OLL algorithm the solver actually uses, when it is not the default.
-   * This is not cosmetic: 28 of the 57 cases have published variants that leave
+   * This is not cosmetic: 26 of the 57 cases have published variants that leave
    * a DIFFERENT PLL, so predicting against the wrong algorithm teaches the
    * wrong answer. See `scripts/verify-cases.ts`.
    */

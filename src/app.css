@@ -106,7 +106,6 @@
     padding-bottom: calc(3.6rem + env(safe-area-inset-bottom));
   }
 }
-}
 
 /*
  * Standalone on a phone there is no browser chrome, so the notch and the home

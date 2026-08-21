@@ -63,12 +63,30 @@
   white-space: nowrap;
 }
 
-.stage__mode {
+/*
+ * Whether this OLL has left this PLL before, and how much of the case has been
+ * met. The unit of recognition is the seam, not the OLL.
+ */
+.stage__seam {
   padding: 0.15rem 0.6rem;
   border-radius: var(--radius-pill);
   background: var(--surface);
   font-size: 0.6875rem;
   white-space: nowrap;
+  color: var(--ink-dim);
+}
+
+/*
+ * A genuinely new seam is a filled badge, not tinted text.
+ *
+ * Amber on an amber tint measures 3.64:1 — under the floor — and this is the
+ * one label in the drill a solver should catch without looking for it. Filled,
+ * it reads at 5.0 and looks like the flag it is.
+ */
+.stage__seam[data-new='true'] {
+  background: var(--caution);
+  color: var(--ground-deep);
+  font-weight: 600;
 }
 
 .stage__reps {
@@ -150,9 +168,11 @@
    */
   /*
    * Measured, not guessed: the ask branch is the taller of the two and it now
-   * carries a row of four options. 306px at 375px wide, 264px on a laptop.
+   * carries a row of four options, each with the case's diagram in it, above a
+   * hint box sized to the longest rung. 239px of content plus 28px of padding
+   * on a laptop; the phone figure is in the narrow block below.
    */
-  min-height: 16.5rem;
+  min-height: 17rem;
   display: grid;
   /* Same reason as the stage: an auto column adopts its content's width. */
   grid-template-columns: minmax(0, 1fr);
@@ -193,8 +213,16 @@
 
 .stage__hint-line {
   position: relative;
-  /* Fixed box: taking a hint must not resize the cube above it. */
-  height: 2.7rem;
+  /*
+   * Fixed box: taking a hint must not resize the cube above it.
+   *
+   * Sized to the LONGEST rung any case produces, measured — 138 characters for
+   * "where to look" and 165 for the piece swaps. At 2.7rem both of those
+   * clipped on a phone, silently, because the box hides its overflow: the rung
+   * telling you where to look was losing its last line, which is the half that
+   * names the right row.
+   */
+  height: 3.3rem;
   max-width: 46rem;
   padding-left: var(--gap-4);
   text-align: left;
@@ -215,10 +243,78 @@
   background: var(--caution);
 }
 
+/*
+ * The aids, floated at the cube's right edge.
+ *
+ * They were labelled buttons in the bottom strip, sitting in the middle of the
+ * line the solver reads every rep. They are things you reach for while looking
+ * at the cube, so they belong beside it — and as icons, because a word there is
+ * one more thing to read while the clock runs.
+ *
+ * Absolutely positioned so that showing or hiding them cannot change the
+ * strip's height, which is the constraint the whole layout is built around.
+ */
 .stage__aids {
+  position: absolute;
+  top: 50%;
+  right: var(--gap-3);
+  transform: translateY(-50%);
   display: flex;
+  flex-direction: column;
   gap: var(--gap-2);
   align-items: center;
+  z-index: 2;
+}
+
+.stage__aid {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition:
+    color var(--capture),
+    background-color var(--capture);
+}
+
+.stage__aid:hover:not(:disabled) {
+  background: var(--surface-strong);
+  color: var(--ink-strong);
+}
+
+.stage__aid[data-on='true'] {
+  background: color-mix(in srgb, var(--caution) 16%, transparent);
+  color: var(--caution);
+}
+
+.stage__aid:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* How far up the ladder you have gone, without a word for it. */
+.stage__aid-count {
+  position: absolute;
+  bottom: -0.15rem;
+  right: -0.15rem;
+  padding: 0 3px;
+  border-radius: var(--radius-sm);
+  background: var(--ground);
+  font-size: 0.5625rem;
+  font-style: normal;
+  color: var(--caution);
+}
+
+/* On the answer strip it sits in the control row rather than on the cube. */
+.stage__aid--inline {
+  position: static;
+  transform: none;
 }
 
 .stage__answer {
@@ -248,10 +344,15 @@
   gap: 2px;
 }
 
-.stage__result-name {
-  font-size: 1.0625rem;
-  font-weight: 600;
-  color: var(--ink-strong);
+/*
+ * The verdict leads, and the case name follows it.
+ *
+ * It used to read "Rb perm · 0.84s", which answers "what was it" before "did I
+ * get it" — and the second question is the one you are actually asking at the
+ * moment the answer lands.
+ */
+.stage__verdict-line {
+  margin: 0;
   display: flex;
   align-items: baseline;
   gap: var(--gap-3);
@@ -259,13 +360,24 @@
 }
 
 .stage__verdict {
-  font-style: normal;
-  font-size: 0.6875rem;
-  font-weight: 500;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+
+.stage__verdict[data-tone='ok'] {
+  color: var(--caution);
+}
+
+/* Never colour alone: the word itself carries it. */
+.stage__verdict[data-tone='miss'] {
   color: var(--warning);
 }
 
-.stage__verdict[data-ok='true'] {
+.stage__time {
+  font-style: normal;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--ink-dim);
 }
 
@@ -286,41 +398,7 @@
   flex: none;
 }
 
-.stage__toggle {
-  padding: 0.55rem 1rem;
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink-dim);
-  font-size: var(--label-size);
-  letter-spacing: var(--label-tracking);
-  font-weight: 600;
-  transition:
-    color var(--capture),
-    background-color var(--capture);
-}
-
-.stage__toggle[data-on='true'] {
-  color: var(--caution);
-}
-
-.stage__toggle:hover {
-  background: var(--surface-strong);
-  color: var(--ink-strong);
-}
-
-/* In the ask strip the toggle is an aside, not a peer of the primary action. */
-.stage__toggle--quiet {
-  background: none;
-  padding: 0.35rem 0.6rem;
-  font-size: 0.6875rem;
-}
-
-.stage__toggle--quiet:hover {
-  background: var(--surface);
-}
-
-.action kbd,
-.stage__toggle kbd {
+.action kbd {
   font: inherit;
   font-size: 0.6875rem;
   margin-left: 0.5rem;
@@ -433,10 +511,16 @@
   .stage__foot {
     padding: var(--gap-3);
     /*
-     * The four options wrap to a 2x2 block on a phone, so the ask branch needs
-     * 323px here — measured. Under-reserving grew the cube 10px on every answer.
+     * The four options wrap to a 2x2 block on a phone, and each now carries the
+     * case's diagram — 335px of content plus 24px of padding, 359 in all,
+     * measured in a browser rather than reasoned about. The previous 21.5rem
+     * (344px) was right for text-only options and grew the cube 15px on every
+     * reveal once the diagrams landed.
+     *
+     * This is the fifth time this reservation has gone stale as the strip's
+     * content changed. It is measured every time for exactly that reason.
      */
-    min-height: 21.5rem;
+    min-height: 23.25rem;
   }
 
   .stage__answer {
@@ -542,17 +626,10 @@
 }
 
 @media (pointer: coarse) {
-  /* Every control you press during a rep is a real target. */
-  .stage__toggle,
-  .stage__toggle--quiet {
-    min-height: 2.75rem;
-    display: inline-flex;
-    align-items: center;
-    padding-inline: 0.9rem;
-  }
-
-  .stage__toggle--quiet {
-    font-size: 0.6875rem;
+  /* Every control you press during a rep is a real thumb target. */
+  .stage__aid {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .stage__aids {
@@ -560,7 +637,6 @@
   }
 
   /* Keyboard legends mean nothing on a phone. */
-  .stage__toggle kbd,
   .action kbd {
     display: none;
   }
@@ -602,16 +678,6 @@
   text-align: center;
 }
 
-.stage__setup-picker {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: center;
-  padding: var(--gap-4);
-}
-
 .stage__setup-scramble {
   max-width: 30rem;
   font-size: clamp(1.125rem, 4.5vw, 1.75rem);
@@ -630,94 +696,4 @@
 
 .stage {
   position: relative;
-}
-
-/* --- Which cases the test draws from ------------------------------------- */
-
-.picker {
-  width: 100%;
-  max-width: 30rem;
-  margin-top: var(--gap-3);
-}
-
-.picker__summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.9rem;
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  cursor: pointer;
-  list-style: none;
-}
-
-.picker__summary::-webkit-details-marker {
-  display: none;
-}
-
-.picker__summary:hover {
-  background: var(--surface-strong);
-  color: var(--ink);
-}
-
-.picker__body {
-  margin-top: var(--gap-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-2);
-}
-
-.picker__all button {
-  padding: 0.3rem 0.7rem;
-  border-radius: var(--radius-pill);
-  color: var(--ink-dim);
-}
-
-.picker__all button:hover {
-  background: var(--surface);
-  color: var(--ink);
-}
-
-.picker__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(3.5rem, 1fr));
-  gap: var(--gap-2);
-  max-height: 14rem;
-  overflow-y: auto;
-}
-
-.picker__case {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 0.4rem 0.2rem;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  opacity: 0.35;
-  transition:
-    opacity var(--capture),
-    background-color var(--capture);
-}
-
-.picker__case[data-on='true'] {
-  opacity: 1;
-  background: var(--surface-strong);
-}
-
-.picker__case b {
-  font-size: 0.6875rem;
-  color: var(--ink-dim);
-}
-
-@media (pointer: coarse) {
-  .picker__summary,
-  .picker__all button {
-    min-height: 2.75rem;
-  }
-
-  .picker__case {
-    min-height: 3rem;
-  }
 }

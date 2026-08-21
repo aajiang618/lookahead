@@ -520,22 +520,34 @@ console.log('\nHints: the same colour reading, handed over a rung at a time')
       const read = readTwoSided(oll, drill.ollAlg, drill.state)
       const chain = decidingComparisons(oll, drill.ollAlg, drill.state)
 
-      if (hints.length !== 3) wrongCount++
+      /*
+       * Four rungs, and the middle two are the two routes: how the pieces move,
+       * then what the colours those pieces land in say. A solver asks for a hint
+       * precisely when the method the lesson committed to is not working, so the
+       * ladder has to offer the other one rather than repeat itself.
+       */
+      if (hints.length !== 4) wrongCount++
       if (hints.some((h) => !h.text || h.text.length < 20)) emptyText++
 
-      // The first rung says where to look and nothing more. It is the one rung
-      // that has to survive being taken on a rep you still mean to answer.
-      if (PLL_CASES.some((c) => new RegExp(`\\b${c.name} perm\\b`).test(hints[0].text))) leaksEarly++
-      if (/leaves|only/i.test(hints[0].text)) leaksEarly++
+      /*
+       * Neither of the first two rungs may give the answer away. Rung 1 says
+       * where to look; rung 2 says what the algorithm does to those pieces —
+       * both are mechanism, true of the case before any particular drill of it,
+       * and both have to survive being taken on a rep you still mean to answer.
+       */
+      for (const rung of hints.slice(0, 2)) {
+        if (PLL_CASES.some((c) => new RegExp(`\\b${c.name} perm\\b`).test(rung.text))) leaksEarly++
+        if (/leaves|only/i.test(rung.text)) leaksEarly++
+      }
 
       // Anything a rung names has to still contain the true answer.
-      if (read.candidates.length <= 4 && !new RegExp(`\\b${pll.name}\\b`).test(hints[1].text)) {
+      if (read.candidates.length <= 4 && !new RegExp(`\\b${pll.name}\\b`).test(hints[2].text)) {
         dishonest++
       }
 
       // The last rung finishes the job: either it names the case outright, or
       // it hands over the comparison that does.
-      const last = hints[2].text
+      const last = hints[3].text
       const namesIt = new RegExp(`\\b${pll.name}\\b`).test(last)
       if (chain.length === 0 ? !namesIt : !/Compare /.test(last)) notFinal++
 
@@ -546,12 +558,71 @@ console.log('\nHints: the same colour reading, handed over a rung at a time')
     }
   }
 
-  check('every case produces exactly three rungs', wrongCount === 0, `${wrongCount} did not`)
+  check('every case produces exactly four rungs', wrongCount === 0, `${wrongCount} did not`)
   check('every rung says something', emptyText === 0, `${emptyText} empty`)
-  check('the first rung says where to look and nothing more', leaksEarly === 0, `${leaksEarly} gave more`)
+  check('neither mechanism rung gives the case away', leaksEarly === 0, `${leaksEarly} gave more`)
   check('a named shortlist always contains the true case', dishonest === 0, `${dishonest} did not`)
   check('the last rung either names it or hands over the comparison', notFinal === 0, `${notFinal} did not`)
   check('every rung lights stickers you can actually see', badHighlight === 0, `${badHighlight} bad`)
+}
+
+console.log('\nA wrong answer says why it was wrong')
+{
+  const { explainMiss, classesOfPll, CORNER_CLASS_LABEL, EDGE_CLASS_LABEL } = await import(
+    '../src/cube/recognition.ts'
+  )
+  const { buildDrill } = await import('../src/cube/scramble.ts')
+
+  let silent = 0
+  let missesActual = 0
+  let missesChosen = 0
+  let wrongProperty = 0
+  let pairs = 0
+
+  for (const oll of OLL_CASES) {
+    for (const pll of PLL_CASES) {
+      const drill = buildDrill(oll, pll, 11, { varyAngle: false })
+      for (const chosen of PLL_CASES) {
+        if (chosen.id === pll.id) continue
+        pairs++
+        const why = explainMiss(drill.stateAfterOLL, pll, chosen)
+
+        if (!why || why.length < 20) silent++
+        // It must name the case that actually landed, and the one picked
+        // instead — an explanation you cannot attach to your own answer is
+        // just a restatement of the answer.
+        if (!new RegExp(`\\b${pll.name}\\b`).test(why)) missesActual++
+        if (!new RegExp(`\\b${chosen.name}\\b`).test(why)) missesChosen++
+
+        /*
+         * The separating property has to be the one it claims. Classes are
+         * AUF-invariant, so this holds whichever way round the case arrived —
+         * which is the entire reason the sentence is built from classes rather
+         * than from the colours on screen.
+         */
+        const here = classesOfPll(pll)
+        const theirs = classesOfPll(chosen)
+        if (here.corners !== theirs.corners) {
+          if (!why.includes(CORNER_CLASS_LABEL[here.corners])) wrongProperty++
+        } else if (here.edges !== theirs.edges) {
+          if (!why.includes(EDGE_CLASS_LABEL[here.edges])) wrongProperty++
+        } else if (!/shares its corner and edge pattern/.test(why)) {
+          // Identical on both classes: the honest answer is that two sides
+          // cannot separate them, not an invented distinction.
+          wrongProperty++
+        }
+      }
+    }
+  }
+
+  check('every miss is explained', silent === 0, `${silent} of ${pairs} said nothing`)
+  check('the explanation names the case that landed', missesActual === 0, `${missesActual} did not`)
+  check('the explanation names the case you picked', missesChosen === 0, `${missesChosen} did not`)
+  check(
+    'it names the property that actually separates the pair',
+    wrongProperty === 0,
+    `${wrongProperty} named the wrong one`,
+  )
 }
 
 console.log('\nOrientation and algorithm choice')

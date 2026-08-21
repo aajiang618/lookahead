@@ -47,75 +47,29 @@ import {
 } from './store.ts'
 
 // ---------------------------------------------------------------------------
-// Unlock policy
+// What is left of the curriculum
 // ---------------------------------------------------------------------------
 
-/**
- * Cases allowed to be learned at the same time.
+/*
+ * The unlock policy used to live here: a daily cap on new cases, an active-set
+ * ceiling, an accuracy gate, a warm-up requirement. All of it existed to answer
+ * one question — which cases should this solver be allowed to meet today — and
+ * that question now has a better answer, which is that they choose.
  *
- * This counts cases that have never been mastered. A case that was automatic
- * and slipped back is relearning, not new load, so it does not consume a slot —
- * otherwise a run of bad luck on retired cases would quietly freeze the
- * curriculum.
+ * Every gate it enforced was a guess at the solver's own judgement, and the
+ * whole apparatus is gone rather than kept behind a flag. What survives is
+ * everything that MEASURES: mastery, leeches, the day-scale roll-up, and ARTS
+ * deciding the order within whatever set is in front of it.
  */
-export const ACTIVE_SET_MAX = 6
-export const DAILY_NEW_CAP = 3
-export const SESSION_NEW_CAP = 2
-/** Rolling accuracy the solver must hold before new work is added. */
-export const ACCURACY_GATE = 0.9
+
 export const ACCURACY_WINDOW = 40
-/** Trials of warm-up on known cases before the first unlock may fire. */
-export const UNLOCK_AFTER_TRIALS = 15
-/** Trials used to encode a brand-new case before it joins the interleaved pool. */
-export const ENCODE_TRIALS = 4
-
-export interface UnlockDecision {
-  allowed: boolean
-  /** Why not, phrased for the interface. */
-  blockedBy?: string
-}
-
-export interface UnlockInputs {
-  activeCount: number
-  rollingAccuracy: number
-  accuracySamples: number
-  medianRt7d: number
-  medianRt28d: number
-  introducedThisSession: number
-  introducedToday: number
-  trialsDone: number
-  hasCandidates: boolean
-  /** Cases already available to drill. Zero on a brand-new profile. */
-  poolSize: number
-}
-
-export function mayUnlock(input: UnlockInputs): UnlockDecision {
-  if (!input.hasCandidates) return { allowed: false, blockedBy: 'Every case is in play' }
-  // The warm-up requirement exists so response times are at steady state before
-  // new work lands. With an empty deck there is nothing to warm up on, and
-  // enforcing it would deadlock: no trials without cases, no cases without trials.
-  if (input.poolSize > 0 && input.trialsDone < UNLOCK_AFTER_TRIALS) {
-    return { allowed: false, blockedBy: `Warming up — ${UNLOCK_AFTER_TRIALS - input.trialsDone} to go` }
-  }
-  if (input.activeCount >= ACTIVE_SET_MAX) {
-    return { allowed: false, blockedBy: `${ACTIVE_SET_MAX} cases already in progress` }
-  }
-  if (input.introducedThisSession >= SESSION_NEW_CAP) {
-    return { allowed: false, blockedBy: 'Session limit for new cases reached' }
-  }
-  if (input.introducedToday >= DAILY_NEW_CAP) {
-    return { allowed: false, blockedBy: 'Daily limit for new cases reached' }
-  }
-  if (input.accuracySamples >= ACCURACY_WINDOW && input.rollingAccuracy < ACCURACY_GATE) {
-    return { allowed: false, blockedBy: 'Accuracy below 90% — consolidating first' }
-  }
-  // The condition most schedulers miss: if the solver is getting slower overall,
-  // the active set is already saturated and adding to it makes things worse.
-  if (input.medianRt28d > 0 && input.medianRt7d > 1.15 * input.medianRt28d) {
-    return { allowed: false, blockedBy: 'Recognition is slowing — holding steady' }
-  }
-  return { allowed: true }
-}
+/**
+ * Unscored reps that introduce a case. Exactly one: it walks the lesson, and
+ * everything after it is a test. Reading the same explanation four times in a
+ * row was copying rather than learning, and the other three reps were being
+ * spent without ever counting.
+ */
+export const ENCODE_TRIALS = 1
 
 // ---------------------------------------------------------------------------
 // Mastery and retirement
@@ -286,6 +240,16 @@ export function applyTrial(
     hints: outcome.hinted ? 1 : 0,
   }
 
+  /*
+   * The seam is recorded whether the rep was scored or not, and whether it was
+   * answered right or wrong. What it records is "this OLL has left you this
+   * PLL", which is true the moment it appears on screen — it is a fact about
+   * exposure, not about performance.
+   */
+  const seenPlls = item.seenPlls.includes(outcome.pllId)
+    ? item.seenPlls
+    : [...item.seenPlls, outcome.pllId]
+
   if (outcome.unscored) {
     // Encoding trial: it happened, but it teaches rather than tests. Once the
     // encode quota is met the case joins the interleaved pool for good.
@@ -293,6 +257,8 @@ export function applyTrial(
     return {
       ...item,
       encodes,
+      seenPlls,
+      lastSeenAt: now,
       phase: encodes >= ENCODE_TRIALS ? 'building' : item.phase,
       recent: [...item.recent, record].slice(-RECENT_TRIAL_CAP),
     }
@@ -321,6 +287,8 @@ export function applyTrial(
     ...item,
     recent,
     sessionsSeen,
+    seenPlls,
+    lastSeenAt: now,
     streak,
     paceSessions,
     reps: item.reps + 1,
@@ -396,37 +364,17 @@ export function isEncoding(item: ItemProgress): boolean {
 // Session pool
 // ---------------------------------------------------------------------------
 
-export interface PoolComposition {
-  building: string[]
-  dueMaintenance: string[]
-  /** Not due, sampled anyway: FSRS cannot see speed rot, so we spot-check. */
-  sampledMaintenance: string[]
-}
+/*
+ * `composePool` used to assemble the day's pool out of what was building, what
+ * FSRS said was due, and a sample of retired cases. The pool is now simply the
+ * set you selected, so there is nothing left to compose. FSRS still computes a
+ * due date on every roll-up and the Cases screen still shows it — it is
+ * information about when a case is worth revisiting, not a gate on seeing it.
+ */
 
-export const MAINTENANCE_SAMPLE_SHARE = 0.05
-
-export function composePool(progress: Progress, estimatedTrials: number): PoolComposition {
-  const day = today()
-  const items = Object.values(progress.items).filter((i) => !i.parked)
-
-  const building = items.filter((i) => i.phase === 'building' || i.phase === 'introducing')
-  const maintenance = items.filter((i) => i.phase === 'maintenance')
-
-  const due = maintenance.filter((i) => !i.due || daysBetween(day, i.due) <= 0)
-  const notDue = maintenance.filter((i) => i.due && daysBetween(day, i.due) > 0)
-
-  // Prefer the longest-interval cases for spot checks: they are the most likely
-  // to have gone stale and the cheapest to confirm.
-  const sampleSize = Math.max(0, Math.round(estimatedTrials * MAINTENANCE_SAMPLE_SHARE))
-  const sampled = [...notDue]
-    .sort((a, b) => (b.stability ?? 0) - (a.stability ?? 0))
-    .slice(0, Math.min(sampleSize, notDue.length))
-
-  return {
-    building: building.map((i) => i.id),
-    dueMaintenance: due.map((i) => i.id),
-    sampledMaintenance: sampled.map((i) => i.id),
-  }
+/** How overdue a case is in days, negative when it is not due yet. */
+export function daysOverdue(item: ItemProgress, day = today()): number | null {
+  return item.due ? daysBetween(item.due, day) : null
 }
 
 /** Turn stored progress into the shape ARTS wants. */
@@ -519,13 +467,6 @@ export function pushLogRt(progress: Progress, netRt: number): number[] {
 export function newLoadCount(progress: Progress): number {
   return Object.values(progress.items).filter(
     (i) => (i.phase === 'building' || i.phase === 'introducing') && !i.everMastered && !i.parked,
-  ).length
-}
-
-/** Cases being relearned after having been mastered once. */
-export function relearningCount(progress: Progress): number {
-  return Object.values(progress.items).filter(
-    (i) => i.phase === 'building' && i.everMastered && !i.parked,
   ).length
 }
 

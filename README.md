@@ -3,8 +3,8 @@
 One thing: **read the PLL out of an OLL you have not executed yet.**
 
 You are shown a cube with the OLL still pending and the algorithm you use for
-it. You name the PLL it will leave. Timed to the hundredth of a second, one case
-at a time, building across the 57 OLLs day by day.
+it. You name the PLL it will leave. Timed to the hundredth of a second, on
+whichever of the 57 OLLs you chose to train.
 
 It assumes you already know the algorithms. There is no PLL-recognition mode, no
 alg trainer, no solve timer.
@@ -16,42 +16,53 @@ npm run dev
 
 ## The three screens
 
-**Four tabs, icons, along the bottom on a phone.** Home shows Today — the whole
-plan, review included — with the cases being learned drawn as diagrams and a
-progress bar underneath. **Train** is the timed test: the scramble alone on a
-full screen, tap when you are looking at the cube, then pick from **four**
-options. The clock starts on the tap, so setting the case up is never timed as
-recognition, and the three wrong answers are the cases that genuinely look like
-the right one. A menu on that screen chooses which cases it draws from. Underneath, **Practise one case** drills a single OLL, every PLL it can
-leave, multiple choice — deliberately **unscored**, because self-selected reps
-are exactly what breaks a spaced-repetition schedule. The scramble differs on
-every rep, so what you learn is the case, never the setup.
+**Three tabs, icons, along the bottom on a phone.** There is no Home and no
+Today. The app used to open on a card that decided your day — what was due, how
+much you were allowed to learn — and all of it rested on the app knowing better
+than you which cases you should be looking at. It does not.
 
+**Train** opens on the selection: all 57 cases, grouped by shape family the way
+cubers already talk about them, and you pick. One case or twenty. A family
+selects in one press, the choice is remembered between sessions, and nothing is
+locked — a case exists the moment you choose it.
+
+Then the drill. It is almost entirely cube: a thin strip above (which OLL, your
+algorithm, whether this pairing is new), the cube filling everything else, a
+thin strip below. Nothing sits beside it, and the strips hold a fixed height so
+the cube never resizes mid-rep. Four options, each carrying the PLL's own
+diagram, because matching a shape against a shape is the operation being
+trained; a name is a label you have to translate back into a permutation first.
 
 The interface is white, plain-typed and soft-cornered: no borders anywhere, no
 uppercase, one burnt-amber accent spent on the single control you press, and the
 cube framed loose with air on every side. The cube is the only saturated colour
 on screen and the only hard-cornered thing in the app.
 
-**Train** — the drill, and it is almost entirely cube. A thin strip above (which
-exercise, which OLL, your algorithm), the cube filling everything else, a thin
-strip below. Nothing sits beside it, and the strips hold a fixed height so the
-cube never resizes mid-rep.
+## The seam is the unit
 
-A session is a run of **exercises**: one OLL, a few reps each, then the next
-case. Every rep the same OLL leaves a different PLL — that is the skill. Nothing
-is revealed until you commit: **Space** to reveal, then **J** if you had it or
-**F** if you missed, and it moves straight on. Two keys per rep.
+One OLL leaves 21 different PLLs, and each of those pairings is its own thing to
+recognise. There are **1,197 seams**, and "I have trained OLL 21" can easily
+mean you have met four of its twenty-one outcomes.
 
-**The first time a case comes up, it teaches instead of testing** — in **one
-step**, and by whichever route that particular case actually rewards:
+So the app counts seams rather than reps. Every rep says whether this exact
+pairing is **new** or one you have seen, and how far through the case's
+twenty-one you are. Unseen outcomes are shown first: uniform random over 21
+takes about 74 reps to cover them all and still does not guarantee it, whereas
+draining the unseen ones first covers a case in exactly 21 and makes the "new"
+flag mean something.
 
-> **Read the two rows** — Front row: UBR top, UR top, UFL front → no block.
-> Right row: UFL top, UF top, UFR top → no block. That alone is Rb.
+Cases shows the same thing per case — how many outcomes you have met, which
+ones, and when you last reviewed it.
 
-> **Follow the pieces** — Corners never move here, only twist: the three you can
-> read now (UBR, UFR, UFL) are the three you get. Edges: UB → UR → UL → UB, so
-> UR ← UB, UF stays.
+## A session
+
+A run of **exercises**: one OLL, a few reps each, then the next case. Every rep
+the same OLL leaves a different PLL — that is the skill. Answering is one press.
+
+**The first time you ever train a case, it teaches instead of testing** — once,
+in three steps, and by whichever route that particular case actually rewards.
+After that it tests, because reading the same sentence four times in a row is
+copying rather than learning.
 
 A sticker keeps its colour through an algorithm — only its position changes — so
 the front and right rows you are going to read **already exist on the cube**,
@@ -64,9 +75,8 @@ collapse into a single glance, while a piece mapping is a procedure that costs
 the same every time you run it. So reading wins by default even where it is more
 work today. The exception is not "reading is expensive here" but "there is
 nothing to do here at all" — when an algorithm freezes a whole system, what you
-can already see is what you will be left with. **Twelve of the 57 never move a
-corner and five never move an edge; those seventeen follow the pieces and the
-other forty read the colours.**
+can already see is what you will be left with. **Fourteen of the 57 follow the
+pieces and the other forty-three read the colours.**
 
 Two findings make the reading work, both checked across all 1,197 drills:
 
@@ -76,38 +86,41 @@ Two findings make the reading work, both checked across all 1,197 drills:
   absolute colour in the last layer and changes no relation between two of them,
   so a rule written this way is AUF-proof by construction.
 - **The six stickers of the two-sided read settle it alone about a third of the
-  time** (426 of 1,197 drills), and the rest need **0.99 further comparisons on
-  average**, four at the very worst. Each comparison is chosen by its *worst*
-  branch, not its average: a rule is only as good as the reading that goes badly.
+  time**, and the rest need **0.99 further comparisons on average**, four at the
+  very worst. Each comparison is chosen by its *worst* branch, not its average:
+  a rule is only as good as the reading that goes badly.
 
-The first time a case comes up it teaches, step by step: the whole cube, then
-the stickers to notice lit up, then how those colours name the PLL. The rest of
-its introduction — and review — test you with **four options**, and every answer
-repeats the same reading. **Hints only exist after a case has been introduced.**
+## Right or wrong, and why
 
-**Back** (or `Esc`) leaves a session at any point and counts what you did.
+The verdict is two words. **Correct**, with the time — a right answer is its own
+explanation, and printing a paragraph under every one of them is how a drill
+turns into reading. **Incorrect**, with the case that actually landed and one
+sentence saying what separates it from the one you picked.
 
-**A** toggles arrows over the cube showing where the pieces travel. Off by
-default so an unaided rep is the norm; they show the *algorithm's* fixed
-permutation, not the answer, so leaving them on is training wheels rather than
-cheating.
+That sentence is built from the corner and edge **classes** rather than from the
+colours on screen, because an AUF changes every colour and no class — so it
+stays true whichever way round the case arrived. It stops short of claiming the
+difference was visible from two sides: often it was not, and telling someone
+they should have seen something they could not is worse than saying nothing.
+When two cases genuinely share both classes — the G perms do — it says so.
 
-Afterwards, **H** takes a hint, and hints are a ladder rather than a lump — each rung gives
-away strictly more than the last:
+## Hints: both routes, a rung at a time
 
-1. **Where to look.** The five pieces that decide this case light up on the
-   cube: *"Only five pieces decide this: the UFR, UBR, UFL corners and the UF
-   and UR edges. The other three follow from them."*
-2. **What the algorithm does to them.** Arrows come on, plus the movement in
-   words: *"Corners stay put — only their twist changes. Edges cycle UR → UL →
-   UF → UR."*
-3. **What you will be left with.** The pattern, in the colour terms you read it
-   by: *"When it lands: headlights on the front, headlights on the right —
-   headlights = the two outer stickers the same, the middle one different.
-   Exactly one case looks like that."*
+Two icons sit at the cube's edge, out of the line you read: the movement arrows,
+and the hint ladder. A hint used to be the colour reading only, which is the
+method the lesson already committed to — and a hint is asked for at exactly the
+moment that method is not working. So the ladder now hands over **both**:
 
-The first two rungs never name a PLL — checked, for every case. Only the last
-narrows to candidates, and even then usually to two or three.
+1. **Where to look.** The stickers that decide this case, lit on the cube.
+2. **How the pieces move.** The swaps, said as arrivals — what ends up in the
+   slot you are about to read — with the arcs drawn on the cube.
+3. **What the colours say.** The blocks those pieces land in, and what that
+   leaves.
+4. **The comparison that settles it.**
+
+Each rung gives away strictly more than the last. The first two are mechanism —
+true of the case before any particular drill of it — and neither may name a case
+or say what the reading leaves; the suite holds them to that.
 
 **Taking a hint costs the rep.** It still counts for accuracy and still reaches
 the day-scale scheduler, but it cannot advance the mastery streak: a rep you
@@ -115,20 +128,30 @@ needed help on is not evidence the case is automatic. Only the latest rung is on
 screen at a time, in a fixed-height box, so asking for help never resizes the
 cube.
 
+**A** toggles the arrows, **H** takes a hint, **Space** advances. The arrows
+show the *algorithm's* fixed permutation, not the answer, so leaving them on is
+training wheels rather than cheating.
+
 The **scramble** sits under the prompt. Apply it from solved and a real cube
 shows what is on screen — or ignore it and practise entirely on the 3D cube,
-which you can drag to turn over and scroll to zoom.
+which you can drag to turn over and scroll to zoom. With **Real cube** on, the
+scramble is shown alone and full screen and the clock starts when you tap,
+because setting a case up in your hands is not recognition and must not be timed
+as though it were.
 
 **Cases** — per-OLL progress, and everything about one case in one place. The
-list is the tracker: all 57, with recognition pace, rep count and hit rate,
-filterable by automatic / learning / not started. Picking one opens the cube in
-that state, its scramble, **which algorithm you use for it**, per-case stats,
-what is still needed before it counts as automatic, and what you most often
-misread it as.
+list is the tracker: all 57, with recognition pace, outcomes met, hit rate and
+when you last reviewed it, filterable by today / learning / automatic / not
+started. Picking one opens the cube in that state, its scramble, **which
+algorithm you use for it**, per-case stats, all twenty-one outcomes with the
+ones you have met marked, and a control to train that case on its own.
 
 **Log** — session history, the recognition trend, the pace ladder, settings, and
 export/import. Progress lives in this browser only: no account, no server, works
 offline. Export occasionally, because clearing site data clears it.
+
+**Back** (or `Esc`) leaves a session at any point and counts what you did.
+
 
 ## On a phone
 
@@ -151,7 +174,7 @@ npm run icons   # regenerate the home-screen icons from the app's own mark
 
 ## Choosing your algorithm matters
 
-**28 of the 57 cases have published algorithms that leave a different PLL.** A
+**26 of the 57 cases have published algorithms that leave a different PLL.** A
 prediction is only correct against the algorithm you actually execute, so the
 picker in Cases is load-bearing rather than a preference, and cases where the
 variants disagree say so.
@@ -197,13 +220,19 @@ Three findings shaped this, all in `scripts/explore-recognition.ts`:
 3. **"Corner pattern in → corner pattern out" is not a valid shortcut.** It
    fails for 20 of the 57, so the app does not offer it.
 
-## Scheduling: review, and a little more each day
+## What is left of scheduling
 
-Two layers on two clocks, deliberately kept apart.
+**You choose the cases.** There is no unlock order, no daily cap on new
+material, no accuracy gate and no active-set ceiling. All of that existed to
+answer one question — which cases should this solver be allowed to meet today —
+and the question now has a better answer. What survives is everything that
+*measures*.
 
 **ARTS** (`src/train/arts.ts`) decides which case comes next *within* a session,
 from Kellman's Perceptual Learning Modules — speeded visual category
-recognition, structurally the same task. It reads response time natively:
+recognition, structurally the same task. This one still earns its keep: ordering
+inside a chosen set is a question you have not answered by choosing it. It reads
+response time natively:
 
     P = a (N - D) [ b (1 - alpha) log(RT / r) + alpha W ]
 
@@ -212,12 +241,13 @@ pushed away; a slow one returns soon; a wrong one jumps to `W`. `r` is your own
 typical pace, so the sign flip sits at "faster than you usually are" rather than
 at an absolute standard.
 
-**FSRS-6** (`src/train/fsrs.ts`) decides which cases enter a session at all, at
-day scale. Desired retention is 0.93 rather than the usual 0.90, and cases still
-building fluency get a 0.75 interval multiplier — recognition *speed* decays
-faster than accuracy, and FSRS only models accuracy. It receives exactly one
-grade per case per day; ARTS updates every rep. Mixing those timescales is the
-standard way to break an FSRS implementation.
+**FSRS-6** (`src/train/fsrs.ts`) still runs at day scale, but its output is now
+information rather than a gate: it says when a case would be worth revisiting,
+and Cases shows you. Desired retention is 0.93 rather than the usual 0.90, and
+cases still building fluency get a 0.75 interval multiplier — recognition
+*speed* decays faster than accuracy, and FSRS only models accuracy. It receives
+exactly one grade per case per day; ARTS updates every rep. Mixing those
+timescales is the standard way to break an FSRS implementation.
 
 **Latency becomes the grade** (`src/train/latency.ts`). Motor time is measured
 and subtracted, then the answer is scored against your own rolling median with a
@@ -225,17 +255,12 @@ per-case offset, so a naturally slower solver is never punished for being slow �
 only for being slow relative to themselves. Correct-but-slow grades as *Hard*,
 never *Again*.
 
-**New cases arrive gradually**: at most 6 in progress at once, 3 a day, and none
-at all if your overall pace is regressing. The order is easiest-to-track first —
-fewest moving pieces, shortest algorithms — with the dot cases last.
-
 **Two kinds of leech.** The usual accuracy leech, and a *fluency* leech: a case
 reliably correct and reliably slow. It never lapses, so no ordinary scheduler
 would flag it, and it quietly costs a second every time it appears.
 
 **A case cannot be mastered in one sitting.** Mastery needs a streak at pace,
-consistent timing, three or more separate sessions, and three or more viewing
-angles. Without that last one you memorise an image, not a case.
+consistent timing, and three or more separate sessions.
 
 ## Verifying it
 
@@ -260,11 +285,22 @@ Three suites and a typecheck:
   the strong claim — the colour comparisons always terminating on exactly one
   case. A recognition rule that can talk you out of the right answer is worse
   than no rule.
-- **`scripts/verify-curriculum.ts`** — the unlock order and coverage.
+  And it checks that a wrong answer explains itself: across every ordered pair of
+  the 21 cases, the explanation names the case that landed, the case you picked,
+  and the property that genuinely separates them — or says plainly that nothing
+  on the front and right does.
+- **`scripts/verify-training.ts`** — the training model. That the shape families
+  cover all 57 cases; that a case teaches exactly once; that unseen outcomes come
+  first, so all 21 of a case's seams appear within 21 reps and none repeats
+  before then; and that a profile from the old scheduled model migrates without
+  carrying its ghosts — learning state reset, deliberate settings kept,
+  superseded defaults reset rather than inherited.
 - **`scripts/simulate-scheduler.ts`** — drives a synthetic solver through 90
-  daily sessions and asserts the scheduler's properties: cases unlock gradually,
-  the active set holds at its cap, cases reach mastery and earn multi-day
-  intervals, and a slow-but-accurate case is caught as a fluency leech.
+  daily sessions of a growing selection and asserts what still holds: a case
+  teaches once however long it is drilled, every well-drilled case has met all 21
+  outcomes, cases reach mastery and earn multi-day intervals, no single case
+  dominates a session, and a slow-but-accurate case is caught as a fluency
+  leech.
 
 ## Case data
 

@@ -17,18 +17,14 @@ import { applyAlg, parseAlg } from '../cube/engine.ts'
 import { OLL_BY_ID, PLL_BY_ID, PLL_CASES, type OLLCase, type PLLCase } from '../cube/cases.ts'
 import { buildDrill, mulberry32, randomSeed, type Drill } from '../cube/scramble.ts'
 import { gradeAnswer, median, netSeconds, type Baseline, type LatencyContext } from './latency.ts'
-import { caseIdOf, nextGroupIds, nextUnlockCandidates, predictItemId } from './curriculum.ts'
+import { caseIdOf, predictItemId } from './curriculum.ts'
+import { explainMiss } from '../cube/recognition.ts'
 import {
   baselineOf,
-  composePool,
   isEncoding,
   masteryThreshold,
-  mayUnlock,
-  medianRtOverDays,
-  newLoadCount,
   pickNext,
   pushLogRt,
-  rollingAccuracy,
   rollUpDay,
   shouldStop,
   applyTrial,
@@ -48,28 +44,21 @@ export type SessionPhase = 'idle' | 'presenting' | 'feedback' | 'finished'
 /**
  * What a session is for.
  *
- *  - `guided` — the day's mix: whatever is due, plus new cases as the gate
- *    allows. The default, and the one the scheduler is designed around.
- *  - `learn` — new material only, taught then tested, until the day's
- *    allowance is used up.
- *  - `review` — what is due today and nothing new.
- *  - `practice` — one OLL you picked, every PLL it can leave, answered by
- *    multiple choice. Deliberately UNSCORED: self-selected reps are exactly
- *    the input that breaks a spaced-repetition schedule, and the point of
- *    picking is to work on something now, not to tell the scheduler what you
- *    know.
- *  - `timed` — a recognition test across everything unlocked, answered by
- *    multiple choice against the clock. Scored: the schedule chose nothing,
- *    but the cases are its own pool, so the reps are honest evidence.
+ * One mode, because there is one thing to do: train the OLLs you selected. The
+ * five modes that used to live here — guided, learn, review, timed, practice —
+ * were five different answers to "which cases am I working on", a question the
+ * solver now answers directly by picking them.
+ *
+ * Every rep is scored. The old practice mode deliberately recorded nothing, on
+ * the argument that self-selected reps corrupt a spaced schedule; there is no
+ * spaced schedule choosing the pool any more, so there is nothing left to
+ * corrupt and a rep you did is a rep that happened.
  */
-export type SessionMode =
-  | { kind: 'guided' }
-  | { kind: 'learn'; more?: boolean }
-  | { kind: 'review' }
-  | { kind: 'timed' }
-  | { kind: 'practice'; ollId: string }
+export type SessionMode = { kind: 'train'; ollIds: string[] }
 
-export const GUIDED: SessionMode = { kind: 'guided' }
+export function trainMode(ollIds: string[]): SessionMode {
+  return { kind: 'train', ollIds }
+}
 
 export interface Trial {
   itemId: string
@@ -82,6 +71,18 @@ export interface Trial {
   resolved: string
   /** True while the case is being taught rather than tested. */
   encoding: boolean
+  /**
+   * This OLL has never left this PLL before.
+   *
+   * The seam is the unit of recognition, not the OLL: one case has 21 outcomes
+   * and each is its own thing to see. Knowing which reps are genuinely first
+   * encounters is worth saying out loud — a slow answer on a seam you have
+   * never met is not the same event as a slow answer on one you have drilled a
+   * dozen times, and without the flag they look identical.
+   */
+  newSeam: boolean
+  /** How many of this OLL's 21 outcomes have been seen, this one included. */
+  seamsSeen: number
   /**
    * How many introducing reps this case has already had. Only the first one
    * teaches: after that the lesson has been given, and four readings of it in a
@@ -104,6 +105,13 @@ export interface Feedback {
   mastered: boolean
   /** Cases the solver has confused this one with, if any. */
   confusedWith: PLLCase | null
+  /**
+   * Why it was wrong, when it was. Empty on a correct answer: a right answer
+   * needs no argument, and printing one anyway turns every rep into reading.
+   */
+  why: string
+  /** The rep taught rather than tested, so there is no verdict to give. */
+  taught: boolean
 }
 
 export interface Exercise {
@@ -125,12 +133,10 @@ export interface SessionStats {
 }
 
 /**
- * A brand-new profile is seeded with the whole first recognition group rather
- * than trickled in. With only two cases in the pool, ARTS has nothing to
- * interleave and the first session degenerates into alternating between them.
- * Four easy, visually distinct cases is the smallest pool that behaves.
+ * Rungs on the hint ladder: where to look, how the pieces move, what the
+ * colours say, and the comparison that settles it. See `hintsFor`.
  */
-const FIRST_RUN_SEED = 4
+const HINT_RUNGS = 4
 
 /**
  * The algorithm the solver actually uses for a case. Not a preference: 28 of
@@ -140,6 +146,24 @@ const FIRST_RUN_SEED = 4
 export function chosenAlgFor(oll: OLLCase, choice: Record<string, number>): string {
   const index = choice[oll.id]
   return oll.algs[index]?.alg ?? oll.alg
+}
+
+/**
+ * Which PLL this rep should leave: unseen outcomes first.
+ *
+ * Uniform random over 21 leaves a solver meeting the same handful repeatedly
+ * while others never appear — after twenty reps of one OLL, chance has shown
+ * about thirteen of its twenty-one. Draining the unseen ones first makes
+ * coverage systematic, and makes the "new" flag mean something: a rep marked
+ * new really is the first time that pair has existed for this solver.
+ *
+ * Exported so the property can be tested without a React tree.
+ */
+export function chooseOutcome(seenPllIds: string[], rng: () => number): PLLCase {
+  const seen = new Set(seenPllIds)
+  const unseen = PLL_CASES.filter((c) => !seen.has(c.id))
+  const from = unseen.length > 0 ? unseen : PLL_CASES
+  return from[Math.floor(rng() * from.length)]
 }
 
 export function useSession() {
@@ -160,8 +184,8 @@ export function useSession() {
     setPhaseState(next)
   }, [])
   const [trial, setTrial] = useState<Trial | null>(null)
-  const modeRef = useRef<SessionMode>(GUIDED)
-  const [mode, setModeState] = useState<SessionMode>(GUIDED)
+  const modeRef = useRef<SessionMode>(trainMode([]))
+  const [mode, setModeState] = useState<SessionMode>(() => trainMode([]))
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [stopReason, setStopReason] = useState('')
 
@@ -202,18 +226,18 @@ export function useSession() {
 
   const buildTrialFor = useCallback((itemId: string, current: Progress): Trial | null => {
     const item = current.items[itemId]
-    // Practice may pick a case the schedule has not unlocked; that is allowed —
-    // it tests, it never teaches, and it records nothing.
-    if (!item && modeRef.current.kind !== 'practice') return null
     const oll = OLL_BY_ID.get(caseIdOf(itemId))
     if (!oll) return null
 
     const seed = randomSeed()
     const rng = mulberry32(seed)
-    // Which PLL results is the thing being learned, so it varies every rep.
-    // The seed varies too, so the same case never arrives by the same scramble
-    // twice — a repeated setup would train recognition of the SCRAMBLE.
-    const pll = PLL_CASES[Math.floor(rng() * PLL_CASES.length)]
+    /*
+     * Which PLL results is the thing being learned, so it varies every rep. The
+     * seed varies too, so the same case never arrives by the same scramble
+     * twice — a repeated setup would train recognition of the SCRAMBLE.
+     */
+    const seen = new Set(item?.seenPlls ?? [])
+    const pll = chooseOutcome(item?.seenPlls ?? [], rng)
     const drill = buildDrill(oll, pll, seed, {
       varyAngle: current.settings.varyAngle,
       varyAuf: current.settings.varyAuf,
@@ -240,13 +264,10 @@ export function useSession() {
       resolved: drill.stateAfterOLL,
       headStart,
       remaining,
-      encoding:
-        modeRef.current.kind === 'practice' || modeRef.current.kind === 'timed'
-          ? false
-          : item
-            ? isEncoding(item)
-            : false,
+      encoding: item ? isEncoding(item) : false,
       encodeIndex: item?.encodes ?? 0,
+      newSeam: !seen.has(pll.id),
+      seamsSeen: seen.size + (seen.has(pll.id) ? 0 : 1),
     }
   }, [])
 
@@ -292,57 +313,37 @@ export function useSession() {
     [persist],
   )
 
-  /** Unlock if the gate allows, then choose and present the next case. */
+  /**
+   * Bring the selected cases into existence, then choose and present the next.
+   *
+   * There is no unlock check any more. A case exists the moment you select it:
+   * the gate that used to stand here — warm-up trials, an active-set ceiling, a
+   * daily cap, an accuracy threshold, a "you are slowing down" brake — was five
+   * ways of overruling the solver about what they were ready to see.
+   */
   const advance = useCallback(() => {
     let current = progressRef.current
 
-    // --- Unlock check ---
-    const candidates = nextUnlockCandidates(current)
-    const pool = composePool(current, 100)
-    const poolSize = pool.building.length + pool.dueMaintenance.length + pool.sampledMaintenance.length
-    const { accuracy, samples } = rollingAccuracy(current)
-    const decision = mayUnlock({
-      activeCount: newLoadCount(current),
-      rollingAccuracy: accuracy,
-      accuracySamples: samples,
-      medianRt7d: medianRtOverDays(current, 7),
-      medianRt28d: medianRtOverDays(current, 28),
-      introducedThisSession: newThisSessionRef.current,
-      /*
-       * "Learn more" spends past the day's allowance on purpose. The cap on how
-       * many cases can be in progress at once still applies — that one is not a
-       * pace preference, it is the thing that stops six half-learned cases
-       * turning into six badly-learned ones.
-       */
-      introducedToday:
-        modeRef.current.kind === 'learn' && modeRef.current.more
-          ? 0
-          : (current.newByDay[today()] ?? []).length,
-      trialsDone: trialIndexRef.current,
-      hasCandidates: candidates.ids.length > 0,
-      poolSize,
-    })
-
-    const wantsNew = modeRef.current.kind === 'guided' || modeRef.current.kind === 'learn'
-    if (decision.allowed && wantsNew) {
-      // Seeding a fresh profile bypasses the per-session and per-day caps: it
-      // is bootstrapping the deck, not adding to an existing workload.
-      const bootstrapping = Object.keys(current.items).length === 0
-      const take = bootstrapping ? nextGroupIds(current, FIRST_RUN_SEED) : candidates.ids
+    // --- Make sure everything selected has an item to record against ---
+    const wanted = modeRef.current.ollIds.map(predictItemId)
+    const missing = wanted.filter((id) => !current.items[id])
+    if (missing.length > 0) {
       const items = { ...current.items }
-      for (const id of take) {
+      const day = today()
+      for (const id of missing) {
         const item = newItem(id)
+        // Introducing rather than building: a case you have never trained gets
+        // its one teaching rep before it is ever tested.
         item.phase = 'introducing'
         item.introducedAt = Date.now()
         items[id] = item
         introducedRef.current.push(id)
         newThisSessionRef.current++
       }
-      const day = today()
       current = {
         ...current,
         items,
-        newByDay: { ...current.newByDay, [day]: [...(current.newByDay[day] ?? []), ...take] },
+        newByDay: { ...current.newByDay, [day]: [...(current.newByDay[day] ?? []), ...missing] },
       }
       persist(current)
     }
@@ -361,46 +362,25 @@ export function useSession() {
     }
 
     // --- Choose ---
-    const nextPool = composePool(current, 100)
-    const kind = modeRef.current.kind
-    const ids =
-      kind === 'learn'
-        ? nextPool.building.filter((id) => current.items[id]?.phase !== 'maintenance')
-        : kind === 'review'
-          ? [...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
-          : kind === 'timed'
-            ? Object.values(current.items)
-                .filter((i) => !i.parked && i.phase !== 'locked')
-                .map((i) => i.id)
-                // An explicit selection wins, but never invents cases the
-                // schedule has not unlocked: you cannot test what you have not met.
-                .filter((id) =>
-                  current.settings.testCases.length === 0
-                    ? true
-                    : current.settings.testCases.includes(caseIdOf(id)),
-                )
-            : kind === 'practice'
-              ? [predictItemId(modeRef.current.kind === 'practice' ? modeRef.current.ollId : '')]
-              : [...nextPool.building, ...nextPool.dueMaintenance, ...nextPool.sampledMaintenance]
+    // The pool is the selection. Nothing is filtered out of it: a case you
+    // picked is a case you meant to see.
+    const ids = wanted
     if (ids.length === 0) {
-      finish(
-        kind === 'learn'
-          ? 'Nothing new to learn right now'
-          : kind === 'review'
-            ? 'Nothing due for review'
-            : kind === 'timed'
-              ? 'Nothing unlocked to test yet'
-              : 'Nothing left to drill today',
-      )
+      finish('No cases selected')
       return
     }
 
-    // A session is a run of exercises, one case each. Stay on the current case
-    // until its reps are done, then let the scheduler choose the next.
+    /*
+     * A session is a run of exercises, one case each. Stay on the current case
+     * until its reps are done, then let ARTS choose the next — which is the one
+     * piece of scheduling that still applies, because ordering WITHIN a chosen
+     * set is a question the solver has not answered by choosing it.
+     *
+     * With a single case selected the whole session is that case, so the reps
+     * cap would only serve to end the exercise and immediately restart it.
+     */
     const reps =
-      modeRef.current.kind === 'practice'
-        ? Number.POSITIVE_INFINITY
-        : Math.max(1, current.settings.repsPerExercise)
+      ids.length === 1 ? Number.POSITIVE_INFINITY : Math.max(1, current.settings.repsPerExercise)
     const active = exerciseRef.current
     const canContinue = active && active.rep < reps && current.items[active.itemId] && ids.includes(active.itemId)
 
@@ -422,7 +402,7 @@ export function useSession() {
       }
     }
     if (!itemId) {
-      finish('Nothing left to drill today')
+      finish('Nothing left to drill')
       return
     }
     setExercise(exerciseRef.current)
@@ -447,7 +427,7 @@ export function useSession() {
   // Lifecycle
   // -------------------------------------------------------------------------
 
-  const start = useCallback((next: SessionMode = GUIDED) => {
+  const start = useCallback((next: SessionMode) => {
     modeRef.current = next
     setModeState(next)
     sessionIdRef.current = `s-${Date.now().toString(36)}`
@@ -491,26 +471,6 @@ export function useSession() {
       }
       const graded = gradeAnswer(correct, raw, current.settings.motorSeconds, ctx)
 
-      /*
-       * Practice is not evidence. The case was chosen by the solver rather than
-       * by the schedule, so folding it into FSRS or the latency baseline would
-       * teach the scheduler what the solver decided to practise instead of what
-       * they actually know.
-       */
-      if (modeRef.current.kind === 'practice') {
-        setFeedback({
-          correct,
-          chosen: chosenPllId ? (PLL_BY_ID.get(chosenPllId) ?? null) : null,
-          netRt: netSeconds(raw, current.settings.motorSeconds),
-          reason: 'Practice — not scored',
-          grade: graded.grade,
-          mastered: false,
-          confusedWith: null,
-        })
-        setPhase('feedback')
-        return
-      }
-
       const updated = applyTrial(
         item,
         {
@@ -543,15 +503,23 @@ export function useSession() {
         logRtWindow: correct && !active.encoding ? pushLogRt(current, graded.netRt) : current.logRtWindow,
       })
 
+      const chosen = chosenPllId ? (PLL_BY_ID.get(chosenPllId) ?? null) : null
       const confusion = confusedCase(updated)
       setFeedback({
         correct,
-        chosen: chosenPllId ? (PLL_BY_ID.get(chosenPllId) ?? null) : null,
+        chosen,
         netRt: netSeconds(raw, current.settings.motorSeconds),
         reason: active.encoding ? 'Learning this one' : graded.reason,
         grade: graded.grade,
         mastered: justMastered,
         confusedWith: confusion,
+        /*
+         * Only on a miss. A correct answer is its own explanation, and printing
+         * a paragraph under every right answer is how a drill turns into
+         * reading — the thing this app exists to make unnecessary.
+         */
+        why: correct ? '' : explainMiss(active.resolved, active.pll, chosen),
+        taught: false,
       })
       setPhase('feedback')
     },
@@ -559,49 +527,63 @@ export function useSession() {
   )
 
   /**
-   * Reveal-and-self-grade. The clock stops when the solver commits to knowing,
-   * which is the honest measurement — deciding you know it is the recognition;
-   * checking is not.
+   * Finish a teaching rep.
+   *
+   * The lesson has been walked; there is nothing to grade, because nothing was
+   * asked. It records as an unscored rep — the case has been met — and shows
+   * the result so the cube and the name land together.
+   *
+   * This replaces reveal-and-self-grade, which is gone. Self-grading measured
+   * whether the solver would admit to a miss rather than whether they had one,
+   * and a four-option test answers the same question without asking anyone to
+   * be honest under time pressure.
    */
-  const revealedAtRef = useRef(0)
-  const reveal = useCallback(() => {
-    if (phaseRef.current !== 'presenting') return
-    revealedAtRef.current = (performance.now() - shownAtRef.current) / 1000
-    setPhase('feedback')
+  const completeTeaching = useCallback(() => {
+    const active = trial
+    const current = progressRef.current
+    if (!active || phaseRef.current !== 'presenting') return
+
+    const item = current.items[active.itemId]
+    if (item) {
+      const updated = applyTrial(
+        item,
+        {
+          itemId: active.itemId,
+          grade: 3,
+          correct: true,
+          netRt: 0,
+          sessionId: sessionIdRef.current,
+          viewTurns: active.drill.viewTurns,
+          pllId: active.pll.id,
+          unscored: true,
+        },
+        masteryThreshold(current.logRtWindow),
+        baselineOf(current),
+      )
+      persist({ ...current, items: { ...current.items, [active.itemId]: updated } })
+    }
+
     setFeedback({
-      correct: false,
-      chosen: null,
-      netRt: netSeconds(revealedAtRef.current, progressRef.current.settings.motorSeconds),
-      reason: 'Grade yourself',
+      correct: true,
+      chosen: active.pll,
+      netRt: 0,
+      reason: 'Taught — not timed',
       grade: 3,
       mastered: false,
       confusedWith: null,
+      why: '',
+      taught: true,
     })
-  }, [setPhase])
-
-  const selfGrade = useCallback(
-    (gotIt: boolean) => {
-      const active = trial
-      if (!active) return
-      // Re-enter the presenting phase just long enough for `commit` to run with
-      // the time captured at the reveal, not the moment of self-grading.
-      setPhase('presenting')
-      commit(gotIt ? active.pll.id : null, revealedAtRef.current)
-      // Grading IS the answer here — the case was already on screen while you
-      // decided. Making you press again to continue adds a keystroke per rep
-      // and nothing else, so go straight to the next one.
-      advance()
-    },
-    [trial, commit, setPhase, advance],
-  )
+    setPhase('feedback')
+  }, [trial, persist, setPhase])
 
   /**
    * Restart the clock for the trial already on screen.
    *
-   * The timed test shows the scramble first and the cube only when the solver
-   * taps, so the moment the trial was built is not the moment recognition
-   * began. Without this the reading time would include however long they spent
-   * setting the case up on a real cube.
+   * With "set up on a real cube" on, the scramble is shown alone and the cube
+   * only when the solver taps, so the moment the trial was built is not the
+   * moment recognition began. Without this the reading time would include
+   * however long they spent setting the case up in their hands.
    */
   const beginLooking = useCallback(() => {
     if (phaseRef.current !== 'presenting') return
@@ -619,7 +601,7 @@ export function useSession() {
   const showHint = useCallback(() => {
     if (phaseRef.current !== 'presenting') return
     if (trial?.encoding) return
-    hintsRef.current = Math.min(hintsRef.current + 1, 3)
+    hintsRef.current = Math.min(hintsRef.current + 1, HINT_RUNGS)
     setHintLevel(hintsRef.current)
   }, [trial])
 
@@ -632,10 +614,20 @@ export function useSession() {
   // Settings and data
   // -------------------------------------------------------------------------
 
+  /**
+   * Patch the settings, either directly or as a function of the current ones.
+   *
+   * The functional form exists because the selection screen is a rapid-fire
+   * multi-select: two taps inside one render both read `settings` from the same
+   * stale closure, compute a new array from it, and the second silently
+   * discards the first. Reading through the ref instead means every tap sees
+   * the tap before it — the same reason `setState` has a functional form.
+   */
   const updateSettings = useCallback(
-    (patch: Partial<Settings>) => {
+    (patch: Partial<Settings> | ((current: Settings) => Partial<Settings>)) => {
       const current = progressRef.current
-      persist({ ...current, settings: { ...current.settings, ...patch } })
+      const resolved = typeof patch === 'function' ? patch(current.settings) : patch
+      persist({ ...current, settings: { ...current.settings, ...resolved } })
     },
     [persist],
   )
@@ -679,8 +671,7 @@ export function useSession() {
     start,
     end,
     commit,
-    reveal,
-    selfGrade,
+    completeTeaching,
     next,
     updateSettings,
     replaceProgress,

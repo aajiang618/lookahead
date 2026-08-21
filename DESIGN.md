@@ -154,6 +154,54 @@ look for** is the computed brief — the readable-piece table, the advice, and t
 live class reading. Tabs rather than stacking, because both want the same
 column and a solver wants one at a time.
 
+## A new case teaches before it tests
+
+The four introducing reps of a case carry the method on screen — corners, then
+edges, then the conclusion on the reveal — and the hint ladder is withheld until
+they are done. Two consequences in the layout:
+
+- The lesson steps forward in the same fixed box the hints use, so stepping from
+  corners to edges does not move the cube.
+- A lesson strip is taller than an ask strip, so the whole rep reserves the
+  taller height, revealed half included. Measured at 375px, where the text wraps
+  furthest: 15.5rem on a laptop, 21rem on a phone. Without that the cube grows
+  the moment the answer appears — the one thing this layout exists to prevent.
+
+The words are computed, never written: `buildTeachingBrief` derives every clause
+from the piece map and the resolved state, and `verify-cases.ts` checks across
+all 1,197 drills that the two reading steps never name a PLL and the conclusion
+always names the case in front of you. A lesson that could drift from the cube
+it is describing would be worse than no lesson.
+
+## On a phone
+
+Installed to a home screen there is no browser chrome, so the app owns the whole
+window and the safe-area insets are its problem, not Safari's. Three rules:
+
+- **Insets go on the outer edges only** — the shell header and the drill's
+  bottom strip — so the strips keep the height they were designed at.
+- **`100dvh`, not `100vh`.** In a browser tab iOS measures `vh` against the
+  viewport with toolbars hidden, which pushes the button you press every rep
+  under the address bar.
+- **The cube takes the drag** (`touch-action: none`). Without it a slow rotate
+  scrolls the document instead of turning the cube, which is the difference
+  between the cube being an object and being a picture.
+
+At `pointer: coarse` every control pressed during a rep becomes a thumb-height
+target and the keyboard legends disappear, since they mean nothing there.
+
+The header collapses to one row below 44rem — the wordmark keeps its glyph and
+drops its text. A wrapped header costs about 32px, and on a phone that is 32px
+off the cube on every screen.
+
+The home-screen icon is generated, not drawn (`npm run icons`): the mark is
+four corner brackets and a boresight, pure axis-aligned stroke, so it rasterises
+exactly from filled rectangles in the app's own three colours.
+
+Offline is cache-first, which is right here for a reason particular to this app:
+everything it knows is computed on the device from two JSON files, and progress
+lives in localStorage. There is no server state to be stale about.
+
 ## Hints hold the layout still
 
 Only the newest rung renders, in a box of fixed height. Stacking all three grew

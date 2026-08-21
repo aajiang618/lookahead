@@ -26,12 +26,30 @@ case. Every rep the same OLL leaves a different PLL — that is the skill. Nothi
 is revealed until you commit: **Space** to reveal, then **J** if you had it or
 **F** if you missed, and it moves straight on. Two keys per rep.
 
+**The first time a case comes up, it teaches instead of testing.** You get the
+method out loud, in the order your eye takes it — corners, then edges, then what
+the two readings leave:
+
+1. *"Read UBR, UFR and UFL — the corners that decide this case. It moves them:
+   UBR → UFL → UFR → UBR. So the slots you read fill from UFR, UFL and UBR."*
+2. *"Now UR and UF. It moves them: UB and UL swap; UR and UF swap. So the slots
+   you read fill from UR ← UF, UF ← UR."*
+3. On the reveal: *"It lands with two adjacent corners swapped and two adjacent
+   edges swapped — front shows headlights, right shows no block. That pair
+   leaves Rb, Ja, Jb or Ra, and this one is Rb."*
+
+Every clause is computed from your algorithm and the state in front of you; the
+two reading steps never name a PLL, which is checked for all 1,197 drills. That
+runs for the four introducing reps of a case and never again — **hints only
+exist after a case has been introduced**, because a hint on a rep that was never
+a test is a worse copy of the lesson you already had.
+
 **A** toggles arrows over the cube showing where the pieces travel. Off by
 default so an unaided rep is the norm; they show the *algorithm's* fixed
 permutation, not the answer, so leaving them on is training wheels rather than
 cheating.
 
-**H** takes a hint, and hints are a ladder rather than a lump — each rung gives
+Afterwards, **H** takes a hint, and hints are a ladder rather than a lump — each rung gives
 away strictly more than the last:
 
 1. **Where to look.** The five pieces that decide this case light up on the
@@ -69,12 +87,36 @@ misread it as.
 export/import. Progress lives in this browser only: no account, no server, works
 offline. Export occasionally, because clearing site data clears it.
 
+## On a phone
+
+It installs. Open the published page in Safari, **Share → Add to Home Screen**,
+and it runs full-screen with no browser chrome, offline, with its own icon. The
+service worker precaches the whole shell at first launch, so after that it
+starts on a train, on a plane, in a queue.
+
+Progress is stored on the device it runs on, and a home-screen install has its
+own storage — so a phone and a laptop keep separate progress. Move it with the
+export/import in Log.
+
+The drill is built for a thumb: the reveal and grade controls are full-height
+targets, the cube takes the drag rather than the page, and the layout pads
+itself around the notch and the home indicator.
+
+```bash
+npm run icons   # regenerate the home-screen icons from the app's own mark
+```
+
 ## Choosing your algorithm matters
 
 **28 of the 57 cases have published algorithms that leave a different PLL.** A
 prediction is only correct against the algorithm you actually execute, so the
 picker in Cases is load-bearing rather than a preference, and cases where the
 variants disagree say so.
+
+Every case starts on the algorithm the dataset lists first — the common one —
+and stays there unless you pick another. A choice is kept for that case from
+then on: the drill, the lesson, the hints, the arrows and the scramble are all
+generated from whichever algorithm is selected.
 
 ## Recognition tips, computed per case
 
@@ -168,6 +210,10 @@ Three suites and a typecheck:
   facelet permutation from the 3D renderer's own cubie geometry and checks it
   against the engine — if those disagreed, the cube on screen would turn the
   wrong way while the model stayed right.
+  It also checks the lesson every case gives itself: three steps in order, none
+  of them thin, the two reading steps never naming a PLL, the conclusion always
+  naming the case actually in front of you, and every lit sticker belonging to a
+  piece that decides the answer — across all 1,197 drills.
 - **`scripts/verify-curriculum.ts`** — the unlock order and coverage.
 - **`scripts/simulate-scheduler.ts`** — drives a synthetic solver through 90
   daily sessions and asserts the scheduler's properties: cases unlock gradually,

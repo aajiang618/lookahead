@@ -272,10 +272,38 @@ camera straight, **0 of 1,197 drills disagree**; reading them from a rotated
 camera, most do.
 
 So the cube is always presented in the orientation the algorithm is executed in,
-through the reveal as well. Variety comes from the PLL underneath and the AUF,
+through the reveal as well.
+
+**And it is re-presented that way on every rep.** The same defect came back by a
+second route and survived much longer, because it needed a drag to trigger. The
+cube is draggable, and the camera was positioned exactly once — on mount, and
+again only if the zoom changed. So turning the cube over to inspect one case
+left it turned over for every case after it, and the next OLL arrived already
+rotated. Each rep now resets the view first. Turning it over mid-rep is still
+allowed; it is a cube. It just does not carry into the next one.
+
+That reset had been written and never called, and it would not have worked if it
+had been: it restored OrbitControls' saved state, which is the placeholder
+camera from before the framing was ever computed. It refits instead. Variety comes from the PLL underneath and the AUF,
 which change every rep and cannot change the case's name. `MASTERY_MIN_ANGLES`
 went from 3 to 1 with it — mastery counted distinct camera angles, and nothing
 could ever have been mastered once the camera stopped moving.
+
+## Before and after, on request
+
+Once the answer lands the cube shows the PLL, and the OLL you were reading is
+gone — which is the one moment you most want the two together, because what the
+first turns into is the entire thing being learned. A control on the answer
+strip lays them side by side with the algorithm between them, since the
+algorithm is what connects them.
+
+Opt-in, and closed again on the next rep: it is something to study after the
+fact, not something to put in front of someone who already knew the answer.
+
+Flat diagrams rather than two more 3D cubes. A diagram shows all four sides at
+once, and a comparison you have to rotate twice to read is not a comparison. It
+is layered over the cube's own area rather than added to a strip, for the usual
+reason — the strips are reserved to the pixel and the cube must not resize.
 
 ## Algorithm choice is a recognition decision
 

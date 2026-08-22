@@ -18,7 +18,7 @@ import { CubeView3D, type CubeHandle } from '../components/CubeView3D.tsx'
 import { CaseDiagram } from '../components/CaseDiagram.tsx'
 import { PllChoices } from '../components/PllChoices.tsx'
 import { Action } from '../components/Hud.tsx'
-import { ArrowsIcon, HintIcon } from '../components/icons.tsx'
+import { ArrowsIcon, CompareIcon, HintIcon } from '../components/icons.tsx'
 import { PLL_CASES } from '../cube/cases.ts'
 import { pieceMapOf } from '../cube/tracking.ts'
 import { buildTeachingBrief, hintsFor, recognitionArrows } from '../cube/recognition.ts'
@@ -87,6 +87,18 @@ export function Drill({
   )
   const [teachStep, setTeachStep] = useState(0)
   useEffect(() => setTeachStep(0), [trial])
+
+  /*
+   * Before and after, side by side.
+   *
+   * Once the answer lands the cube shows the PLL, and the OLL you were reading
+   * is gone — which is the one moment you most want them together, because the
+   * question being learned is what the first turns into. Opt-in rather than
+   * always on: it is a thing to study after the fact, not something to put in
+   * front of someone who already knew the answer.
+   */
+  const [comparing, setComparing] = useState(false)
+  useEffect(() => setComparing(false), [trial])
   // The last step is the conclusion; it belongs with the revealed cube.
   const askSteps = teaching ? teaching.length - 1 : 0
   const teachAsk = teaching ? teaching[Math.min(teachStep, askSteps - 1)] : null
@@ -147,6 +159,26 @@ export function Drill({
     cubeRef.current?.set(revealed ? trial.resolved : trial.shown)
   }, [trial, revealed])
 
+  /*
+   * Every rep starts from the angle the algorithm is executed from.
+   *
+   * The cube is draggable, and the camera was only ever positioned once — on
+   * mount, and again if the zoom changed. So a single drag to inspect a case
+   * persisted into every rep after it, and the next OLL arrived already
+   * rotated. That is the same defect as the camera rotation removed earlier,
+   * arriving by a different route: fourteen of the 57 top shapes repeat under a
+   * whole-cube rotation, so reading one of them from a dragged view means
+   * executing in a frame the drill never intended and getting a genuinely
+   * different PLL from the one being graded.
+   *
+   * Turning the cube over mid-rep is still allowed — it is a cube. It just
+   * does not carry into the next one.
+   */
+  useEffect(() => {
+    if (!trial) return
+    cubeRef.current?.resetView()
+  }, [trial])
+
   // --- Keyboard -------------------------------------------------------------
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -165,6 +197,10 @@ export function Drill({
       }
       if (event.key === 'h') {
         if (!trial?.encoding) session.showHint()
+        return
+      }
+      if (event.key === 'c') {
+        if (phase === 'feedback') setComparing((v) => !v)
         return
       }
       if (event.code === 'Space') {
@@ -288,6 +324,50 @@ export function Drill({
             </button>
           </div>
         )}
+        {/*
+          Before and after, over the cube rather than beside it. The strips are
+          reserved to the pixel and the cube must not resize, so anything that
+          appears mid-rep is layered on top of the cube's own area.
+
+          Flat diagrams rather than two more 3D cubes: the diagram shows all
+          four sides at once, and a comparison you have to rotate twice to read
+          is not a comparison.
+        */}
+        {comparing && revealed && (
+          <div className="stage__compare">
+            <div className="stage__compare-pair">
+              <figure className="stage__compare-item">
+                <CaseDiagram
+                  facelets={trial.shown}
+                  mode="orientation"
+                  size={128}
+                  title={`${trial.oll.name}, before`}
+                />
+                <figcaption className="label">{trial.oll.name}</figcaption>
+              </figure>
+              <span className="stage__compare-join mono" aria-hidden="true">
+                {trial.drill.ollAlg}
+              </span>
+              <figure className="stage__compare-item">
+                <CaseDiagram
+                  facelets={trial.resolved}
+                  arrows={trial.pll.arrows}
+                  size={128}
+                  title={`${trial.pll.name} perm, after`}
+                  emphasiseTwoSided
+                />
+                <figcaption className="label">{trial.pll.name} perm</figcaption>
+              </figure>
+            </div>
+            <button
+              type="button"
+              className="stage__compare-close label"
+              onClick={() => setComparing(false)}
+            >
+              Close
+            </button>
+          </div>
+        )}
         {trial.encoding && <span className="stage__flag label">Learning — not timed</span>}
       </div>
 
@@ -408,6 +488,16 @@ export function Drill({
                 title="Movement arrows (A)"
               >
                 <ArrowsIcon />
+              </button>
+              <button
+                type="button"
+                className="stage__aid stage__aid--inline"
+                data-on={comparing}
+                onClick={() => setComparing((v) => !v)}
+                aria-pressed={comparing}
+                title="Before and after, side by side (C)"
+              >
+                <CompareIcon />
               </button>
               <Action variant="primary" onClick={() => session.next()}>
                 Next <kbd>Space</kbd>

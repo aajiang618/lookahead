@@ -34,6 +34,20 @@ export function ArrowsIcon() {
   )
 }
 
+/**
+ * heroicons: rectangle-group — before and after, side by side.
+ *
+ * Two panels rather than an arrow or an eye: what the control opens is a pair
+ * of diagrams, and the icon says pair.
+ */
+export function CompareIcon() {
+  return (
+    <Frame>
+      <path d="M3.75 6A2.25 2.25 0 016 3.75h1.5A2.25 2.25 0 019.75 6v12A2.25 2.25 0 017.5 20.25H6A2.25 2.25 0 013.75 18V6zM14.25 6A2.25 2.25 0 0116.5 3.75H18A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25h-1.5A2.25 2.25 0 0114.25 18V6z" />
+    </Frame>
+  )
+}
+
 /** heroicons: light-bulb — the hint ladder. */
 export function HintIcon() {
   return (

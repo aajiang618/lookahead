@@ -128,6 +128,10 @@ needed help on is not evidence the case is automatic. Only the latest rung is on
 screen at a time, in a fixed-height box, so asking for help never resizes the
 cube.
 
+After an answer, **C** lays the OLL and the PLL side by side with the algorithm
+between them — the before and after together, which is the one comparison the
+reveal otherwise takes away.
+
 **A** toggles the arrows, **H** takes a hint, **Space** advances. The arrows
 show the *algorithm's* fixed permutation, not the answer, so leaving them on is
 training wheels rather than cheating.
@@ -319,7 +323,8 @@ data ever fails its own check.
 the four usually named. The shape alone does not tell you which way round to
 apply the algorithm, and a different angle yields a **different PLL**. So every
 drill is built *and shown* in the orientation the algorithm is executed in, the
-reveal included.
+reveal included — and the view is reset to it at the start of every rep, so
+turning the cube over to study one case cannot leave the next one rotated.
 
 The camera used to rotate between reps for variety, on the argument that moving
 the camera cannot move the cube. True of the cube, false of the solver: shown

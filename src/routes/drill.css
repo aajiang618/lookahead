@@ -317,6 +317,93 @@
   transform: none;
 }
 
+/*
+ * Before and after, over the cube.
+ *
+ * Layered on the cube's own area rather than added to a strip, because the
+ * strips are reserved to the pixel and anything appearing mid-rep must not
+ * resize the cube. Same reasoning as the setup screen.
+ */
+.stage__compare {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-4);
+  padding: var(--gap-4);
+  background: var(--ground);
+}
+
+.stage__compare-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-4);
+  flex-wrap: wrap;
+}
+
+.stage__compare-item {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-2);
+}
+
+.stage__compare-item figcaption {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/*
+ * The algorithm sits between the two, because it is the thing that turns one
+ * into the other — the whole content of the comparison.
+ */
+.stage__compare-join {
+  max-width: 9rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--ink-dim);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.stage__compare-close {
+  padding: 0.5rem 1.1rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+
+.stage__compare-close:hover {
+  background: var(--surface-strong);
+  color: var(--ink-strong);
+}
+
+@media (pointer: coarse) {
+  .stage__compare-close {
+    min-height: 2.75rem;
+  }
+}
+
+/* Narrow: stack the pair, and the algorithm reads as the step between them. */
+@media (max-width: 30rem) {
+  .stage__compare-pair {
+    gap: var(--gap-3);
+  }
+
+  .stage__compare-join {
+    max-width: 100%;
+    flex-basis: 100%;
+    order: 2;
+  }
+}
+
 .stage__answer {
   grid-area: 1 / 1;
   display: flex;

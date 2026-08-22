@@ -470,9 +470,17 @@ export const CubeView3D = forwardRef<CubeHandle, CubeView3DProps>(function CubeV
         }
         paint(next, focusLastLayer)
       },
+      /*
+       * Back to the angle the algorithm is executed from.
+       *
+       * Not `controls.reset()`: OrbitControls saves its state at construction,
+       * which is the placeholder position the camera held before `fit` ever
+       * ran, so resetting to it restored the wrong distance and the wrong
+       * framing. `fit` recomputes the canonical view from the viewport, which
+       * is the only definition of "straight on" this app has.
+       */
       resetView() {
-        const controls = controlsRef.current
-        if (controls) controls.reset()
+        fitRef.current?.()
       },
     }),
     [turn, paint, focusLastLayer],

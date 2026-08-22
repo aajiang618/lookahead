@@ -26,4 +26,42 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       // No offline support this launch. The app is otherwise unaffected.
     })
   })
+
+  /*
+   * Pick up a new build without waiting for a second launch.
+   *
+   * The worker already calls skipWaiting and claim, so a new version takes over
+   * as soon as it installs — but THIS page was served from the old cache before
+   * that happened, so it keeps running the old bundle until something reloads
+   * it. That is why a deploy has always taken two launches to appear, and why
+   * "I pushed it" and "I cannot see it" were both true at once.
+   *
+   * `controllerchange` fires exactly when the new worker takes over. A null
+   * controller means this page was never controlled — a first install, not an
+   * update — and reloading for that would be a reload for nothing.
+   */
+  if (navigator.serviceWorker.controller) {
+    let reloading = false
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return
+      reloading = true
+
+      /*
+       * Never mid-rep. Reloading while a case is on screen would throw away an
+       * answer the solver is in the middle of giving, to show them a cosmetic
+       * change — so if a drill is presenting, wait until the app is put away
+       * and swap the build then.
+       */
+      const midRep = () => Boolean(document.querySelector('.stage[data-phase="presenting"]'))
+      if (!midRep()) {
+        window.location.reload()
+        return
+      }
+      document.addEventListener('visibilitychange', function whenHidden() {
+        if (document.visibilityState !== 'hidden') return
+        document.removeEventListener('visibilitychange', whenHidden)
+        window.location.reload()
+      })
+    })
+  }
 }

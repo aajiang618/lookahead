@@ -8,6 +8,12 @@
  * stale about. A new build lands on the next launch after the one that fetched
  * it, which for a trainer opened daily is soon enough, and never mid-session.
  *
+ * A new build used to land on the next launch after the one that fetched it.
+ * That is defensible for a trainer opened daily and it is also how "I deployed
+ * it" and "I cannot see it" ended up both being true at once, so the page now
+ * listens for `controllerchange` and swaps itself over — see main.tsx, which
+ * holds the reload back while a rep is actually on screen.
+ *
  * PRECACHE is rewritten at build time by scripts/build-sw.ts with the real
  * hashed asset names. In dev this file is never registered at all.
  */
